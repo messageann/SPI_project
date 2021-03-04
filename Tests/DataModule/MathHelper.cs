@@ -4,6 +4,7 @@ namespace Core3Tests.DataModule
 {
 	public static class MathHelper
 	{
+		//check alternatives
 		public static UInt16 ToTheUpperPowerOf2(this UInt16 source)
 		{
 			UInt16 power = 0;
