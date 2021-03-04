@@ -52,6 +52,7 @@ namespace DataModule
 			CPass = cpass;
 		}
 
+		//change encoding
 		public static LogInfo ReadFromFile(BinaryReader br)
 		{
 			var pos = br.BaseStream.Position;
@@ -62,6 +63,7 @@ namespace DataModule
 		}
 
 		//check ToBinary vs ToFileTime (speed)
+		//change encoding
 		public void WriteToFile(BinaryWriter bw)
 		{
 			bw.Write(Id);
