@@ -9,23 +9,23 @@
     ".NETFramework,Version=v5.0": []
   },
   "packageFolders": {
-    "C:\\Users\\User\\.nuget\\packages\\": {}
+    "C:\\Users\\annys\\.nuget\\packages\\": {}
   },
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
+      "projectUniqueName": "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
       "projectName": "DataModule",
-      "projectPath": "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
-      "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\obj\\",
+      "projectPath": "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
+      "packagesPath": "C:\\Users\\annys\\.nuget\\packages\\",
+      "outputPath": "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
-        "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+        "C:\\Users\\annys\\AppData\\Roaming\\NuGet\\NuGet.Config",
         "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
       ],
       "originalTargetFrameworks": [
-        "net5.0"
+        "net50"
       ],
       "sources": {
         "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -35,17 +35,10 @@
         "net50": {
           "projectReferences": {}
         }
-      },
-      "warningProperties": {
-        "warnAsError": [
-          "NU1605"
-        ]
       }
     },
     "frameworks": {
-      "net50": {
-        "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.403\\RuntimeIdentifierGraph.json"
-      }
+      "net50": {}
     },
     "runtimes": {
       "win7-x86": {
