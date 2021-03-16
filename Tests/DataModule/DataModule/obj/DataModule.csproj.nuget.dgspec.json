@@ -1,20 +1,20 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj": {}
+    "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj": {}
   },
   "projects": {
-    "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj": {
+    "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
+        "projectUniqueName": "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
         "projectName": "DataModule",
-        "projectPath": "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
-        "packagesPath": "C:\\Users\\User\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\User\\Desktop\\унив\\encoder\\Tests\\DataModule\\DataModule\\obj\\",
+        "projectPath": "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\DataModule.csproj",
+        "packagesPath": "C:\\Users\\annys\\.nuget\\packages\\",
+        "outputPath": "C:\\Users\\annys\\Desktop\\encoder\\Tests\\DataModule\\DataModule\\obj\\",
         "projectStyle": "PackageReference",
         "configFilePaths": [
-          "C:\\Users\\User\\AppData\\Roaming\\NuGet\\NuGet.Config",
+          "C:\\Users\\annys\\AppData\\Roaming\\NuGet\\NuGet.Config",
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
@@ -25,7 +25,8 @@
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "net50": {
+          "net5.0": {
+            "targetAlias": "net5.0",
             "projectReferences": {}
           }
         },
@@ -36,13 +37,24 @@
         }
       },
       "frameworks": {
-        "net50": {
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.403\\RuntimeIdentifierGraph.json"
-        }
-      },
-      "runtimes": {
-        "win7-x86": {
-          "#import": []
+        "net5.0": {
+          "targetAlias": "net5.0",
+          "imports": [
+            "net461",
+            "net462",
+            "net47",
+            "net471",
+            "net472",
+            "net48"
+          ],
+          "assetTargetFallback": true,
+          "warn": true,
+          "frameworkReferences": {
+            "Microsoft.NETCore.App": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\5.0.200\\RuntimeIdentifierGraph.json"
         }
       }
     }

@@ -33,7 +33,7 @@ namespace DataModule
 
 		internal readonly UInt16 Id;
 
-		private string Name;
+		internal string Name;
 
 		private string Descr;
 		#endregion //BODY FIELDS
@@ -59,11 +59,11 @@ namespace DataModule
 			bw.Write(Quantity);
 			bw.Write(Id);
 			byte[] nameb = new byte[BYTES_NAME];
-			Encoding.Default.GetBytes(Name, 0, Name.Length.EqualOrLess(BYTES_NAME*2), nameb, 0);
+			Encoding.Default.GetBytes(Name, 0, Name.Length.EqualOrLess(BYTES_NAME * 2), nameb, 0);
 			bw.Write(nameb);
 
 			byte[] descrb = new byte[BYTES_DESCR];
-			Encoding.Default.GetBytes(Descr, 0, Descr.Length.EqualOrLess(BYTES_DESCR*2), descrb, 0);
+			Encoding.Default.GetBytes(Descr, 0, Descr.Length.EqualOrLess(BYTES_DESCR * 2), descrb, 0);
 			bw.Write(descrb);
 			for (int i = 0; i < _logInfos.Capacity; i++)
 			{
@@ -83,6 +83,52 @@ namespace DataModule
 				Encoding.Default.GetString(br.ReadBytes(BYTES_NAME)), Encoding.Default.GetString(br.ReadBytes(BYTES_DESCR)));
 			br.BaseStream.Seek(br.BaseStream.Position + res._logInfos.Capacity * LogInfo.BYTES_LOGINFO + res.GetNullBytes(), SeekOrigin.Begin);
 			return res;
+		}
+
+		public void ReadLoginfosFromFile(BinaryReader br)
+		{
+			while (_logInfos.Count < Quantity)
+			{
+				var li = LogInfo.ReadFromFile(br);
+				if (li != null)
+				{
+					_logInfos.Add(li);
+				}
+			}
+		}
+
+		public static void WriteNullFoldersToFile(BinaryWriter bw, uint count)
+		{
+			for (int y = 0; y < count; y++)
+			{
+				bw.Write(NullBody);
+				for (int i = 0; i < DEFAULT_QUANTITY; i++)
+				{
+					bw.Write(LogInfo.EmptyLogInfo);
+				}
+			}
+		}
+
+		private int GetNullBytes()
+		{
+			return (((int)this.Status / 2) - 1) * BYTES_BODY;
+		}
+
+		internal UInt32 StatusToMulti() => ((UInt32)Status / 2);
+
+		internal bool IsCached => Quantity == _logInfos.Count;
+
+		public LogInfo this[UInt16 id]
+		{
+			get
+			{
+				if (!IsCached) return null;
+				for (int i = 0; i < _logInfos.Count; i++)
+				{
+					if (_logInfos[i].Id == id) return _logInfos[i];
+				}
+				return null;
+			}
 		}
 
 		private static readonly byte[] NullBody;

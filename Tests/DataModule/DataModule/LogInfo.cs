@@ -29,7 +29,7 @@ namespace DataModule
 
 		#region BODY FIELDS
 		internal readonly UInt16 Id;
-		private readonly string Name;
+		internal readonly string Name;
 		private readonly string Descr;
 		private readonly DateTime Date;
 		private readonly string CLogin;

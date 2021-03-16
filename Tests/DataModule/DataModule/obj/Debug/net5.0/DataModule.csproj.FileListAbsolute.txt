@@ -1,0 +1,16 @@
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\bin\Debug\net5.0\DataModule.exe
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\bin\Debug\net5.0\DataModule.deps.json
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\bin\Debug\net5.0\DataModule.runtimeconfig.json
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\bin\Debug\net5.0\DataModule.runtimeconfig.dev.json
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\bin\Debug\net5.0\DataModule.dll
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\bin\Debug\net5.0\ref\DataModule.dll
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\bin\Debug\net5.0\DataModule.pdb
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.csprojAssemblyReference.cache
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.AssemblyInfoInputs.cache
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.AssemblyInfo.cs
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.csproj.CoreCompileInputs.cache
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.dll
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\ref\DataModule.dll
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.pdb
+C:\Users\annys\Desktop\encoder\Tests\DataModule\DataModule\obj\Debug\net5.0\DataModule.genruntimeconfig.cache
