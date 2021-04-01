@@ -6,7 +6,7 @@ namespace DataModule.Exceptions
 	public class FolderNotCachedException : Exception
 	{
 		public FolderNotCachedException() { }
-		public FolderNotCachedException(FolderInfo fi) : base($"Folderinfo[id:{fi.Id}] not cached!") { }
+		internal FolderNotCachedException(FolderInfoCore fi) : base($"Folderinfo[id:{fi.Id}] not cached!") { }
 		protected FolderNotCachedException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
