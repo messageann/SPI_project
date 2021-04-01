@@ -4,15 +4,13 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
-using System.Text;
 
 namespace DataModule
 {
 	[StructLayout(LayoutKind.Sequential, CharSet = CharSet.Unicode, Pack = 1)]
-	public class FolderInfo : IList<LogInfo>, INotifyCollectionChanged, INotifyPropertyChanged
+	internal class FolderInfoCore : IList<LogInfo>, INotifyCollectionChanged, INotifyPropertyChanged
 	{
 		#region CONSTS
 		internal const int DEFAULT_QUANTITY = 64;
@@ -109,7 +107,7 @@ namespace DataModule
 		#endregion //APP FIELDS
 
 		#region CONSTRUCTORS
-		public FolderInfo(long filePos, StatusEnum status, int count, ushort id, string name, string descr)
+		public FolderInfoCore(long filePos, StatusEnum status, int count, ushort id, string name, string descr)
 		{
 			_status = status;
 			_id = id;
@@ -234,7 +232,7 @@ namespace DataModule
 			return -1;
 		}
 
-		void IList<LogInfo>.RemoveAt(int index)
+		public void RemoveAt(int index)
 		{
 			if (index >= Count) throw new IndexOutOfRangeException();
 			int r = FakeToReal(index);
@@ -261,7 +259,7 @@ namespace DataModule
 			Count--;
 			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, rem, index));
 		}
-		void IList<LogInfo>.Insert(int index, LogInfo item)
+		public void Insert(int index, LogInfo item)
 		{
 			if (IsFull) throw new FolderFullException(this);
 			if (index > Count) throw new IndexOutOfRangeException();
@@ -295,14 +293,14 @@ namespace DataModule
 			((IList<LogInfo>)this).Insert(Count, item);
 		}
 
-		bool ICollection<LogInfo>.Remove(LogInfo item)
+		public bool Remove(LogInfo item)
 		{
 			int index = IndexOf(item);
 			if (index == -1) return false;
 			((IList<LogInfo>)this).RemoveAt(IndexOf(item));
 			return true;
 		}
-		void ICollection<LogInfo>.Clear()
+		public void Clear()
 		{
 			for (int i = 0; i < Count; i++)
 			{
@@ -313,7 +311,7 @@ namespace DataModule
 			Count = 0;
 		}
 
-		LogInfo IList<LogInfo>.this[int index]
+		public LogInfo this[int index]
 		{
 			get => _logInfos[FakeToReal(index)];
 			set
@@ -366,7 +364,7 @@ namespace DataModule
 		#endregion //NOTIFS
 
 		#region STATIC
-		static FolderInfo()
+		static FolderInfoCore()
 		{
 			NullBody = new byte[BYTES_BODY];
 			NullBody[0] = 1;

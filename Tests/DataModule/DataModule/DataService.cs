@@ -27,7 +27,7 @@ namespace DataModule
 		private readonly string _dataPath;
 		private readonly Queue<long> _emptyFolderPoses;
 
-		private readonly List<FolderInfo> _folders;
+		private readonly List<FolderInfoCore> _folders;
 		#endregion fields
 
 
@@ -35,7 +35,7 @@ namespace DataModule
 		{
 			_dataPath = dataPath;
 			_emptyFolderPoses = new Queue<long>(DEFAULT_FOLDERS_COUNT);
-			_folders = new List<FolderInfo>(DEFAULT_FOLDERS_COUNT);
+			_folders = new List<FolderInfoCore>(DEFAULT_FOLDERS_COUNT);
 		}
 		public void Init()
 		{
@@ -47,7 +47,7 @@ namespace DataModule
 				}
 				return;
 			}
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Read, FileShare.None, FolderInfo.BYTES_BODY, FileOptions.SequentialScan))
+			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Read, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
 			using (BinaryReader br = new BinaryReader(fs))
 			{
 				_lastLoginfoId = br.ReadUInt16();
@@ -57,7 +57,7 @@ namespace DataModule
 				fs.Seek(_bytesPerExtradata, SeekOrigin.Begin);
 				long preFolderPos;
 				UInt32 status;
-				byte[] buffer = new byte[FolderInfo.BYTES_BODY];
+				byte[] buffer = new byte[FolderInfoCore.BYTES_BODY];
 				_folders.Capacity = _foldersCount.ToTheUpperPowerOf2();
 				while (_emptyFolderPoses.Count < _emptyFoldersCount)
 				{
@@ -66,37 +66,37 @@ namespace DataModule
 					if ((status & (uint)StatusEnum.NULL) == 1)//null folder
 					{
 						_emptyFolderPoses.Enqueue(preFolderPos);
-						fs.Seek(preFolderPos + FolderInfo.BYTES_BODY + FolderInfo.DEFAULT_QUANTITY * LogInfo.EmptyLogInfo.Length, SeekOrigin.Begin);
+						fs.Seek(preFolderPos + FolderInfoCore.BYTES_BODY + FolderInfoCore.DEFAULT_QUANTITY * LogInfo.EmptyLogInfo.Length, SeekOrigin.Begin);
 					}
 					else//non null folder
 					{
 						fs.Seek(preFolderPos, SeekOrigin.Begin);
-						_folders.Add(FolderInfo.ReadBodyFromFile(br));
+						_folders.Add(FolderInfoCore.ReadBodyFromFile(br));
 					}
 				}
 				while (_folders.Count < _foldersCount)
 				{
 					preFolderPos = fs.Position;
-					_folders.Add(FolderInfo.ReadBodyFromFile(br));
+					_folders.Add(FolderInfoCore.ReadBodyFromFile(br));
 				}
 			}
 		}
 
 		public void AddNewFolder(StatusEnum status, string name, string descr)
 		{
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfo.BYTES_BODY, FileOptions.SequentialScan))
+			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
 			using (BinaryWriter bw = new BinaryWriter(fs))
 			{
 				fs.Seek(_bytesPerLastLoginfoId, SeekOrigin.Begin);
 				bw.Write(++_lastFolderinfoId);
 				bw.Write(++_foldersCount);
-				FolderInfo res;
+				FolderInfoCore res;
 				if (_emptyFolderPoses.Count > 0 && status == StatusEnum.Normal)//if open space exists
 				{
 					fs.Seek(_emptyFolderPoses.Dequeue(), SeekOrigin.Begin);
-					res = new FolderInfo(fs.Position, status, 0, _lastFolderinfoId, name, descr);
+					res = new FolderInfoCore(fs.Position, status, 0, _lastFolderinfoId, name, descr);
 					res.WriteBodyToFile(bw);
-					for (int i = 0; i < FolderInfo.DEFAULT_QUANTITY; i++)
+					for (int i = 0; i < FolderInfoCore.DEFAULT_QUANTITY; i++)
 					{
 						fs.Write(LogInfo.EmptyLogInfo);
 					}
@@ -104,7 +104,7 @@ namespace DataModule
 				else//to EOF
 				{
 					fs.Seek(fs.Length, SeekOrigin.Begin);
-					res = new FolderInfo(fs.Position, status, 0, _lastFolderinfoId, name, descr);
+					res = new FolderInfoCore(fs.Position, status, 0, _lastFolderinfoId, name, descr);
 					res.WriteBodyToFile(bw);
 				}
 				_folders.Add(res);
@@ -118,7 +118,7 @@ namespace DataModule
 				if (_folders[i].Id == id)
 				{
 					var fi = _folders[i];
-					using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfo.BYTES_BODY, FileOptions.SequentialScan))
+					using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
 					using (BinaryWriter bw = new BinaryWriter(fs))
 					{
 						fs.Seek(_bytesPerLastLoginfoId + _bytesPerLastFolderinfoId, SeekOrigin.Begin);
@@ -132,7 +132,7 @@ namespace DataModule
 						}
 						else
 						{
-							FolderInfo.WriteNullFoldersToFile(bw, fi.StatusToMulti());
+							FolderInfoCore.WriteNullFoldersToFile(bw, fi.StatusToMulti());
 						}
 					}
 					return true;
@@ -141,17 +141,17 @@ namespace DataModule
 			return false;
 		}
 
-		public bool AddNewLogInfo(FolderInfo fi, string name, string descr, string clogin, string cpass)
+		public bool AddNewLogInfo(FolderInfoCore fi, string name, string descr, string clogin, string cpass)
 		{
 			if (fi._logInfos.Count == fi._logInfos.Capacity) return false;
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None, FolderInfo.BYTES_BODY, FileOptions.SequentialScan))
+			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
 			using (BinaryWriter bw = new BinaryWriter(fs))
 			using (BinaryReader br = new BinaryReader(fs))
 			{
 				bw.Write(++_lastLoginfoId);
-				fs.Seek(fi.FilePos + FolderInfo.BYTES_STATUS, SeekOrigin.Begin);
+				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_STATUS, SeekOrigin.Begin);
 				bw.Write(++fi.Quantity);
-				fs.Seek(fi.FilePos + FolderInfo.BYTES_BODY, SeekOrigin.Begin);
+				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_BODY, SeekOrigin.Begin);
 				while (br.ReadUInt16() != 0)
 				{
 					fs.Seek(fs.Position + LogInfo.BYTES_LOGINFO - LogInfo.BYTES_ID, SeekOrigin.Begin);
@@ -164,14 +164,14 @@ namespace DataModule
 			return true;
 		}
 
-		public bool RemoveLogInfo(FolderInfo fi, UInt16 id)
+		public bool RemoveLogInfo(FolderInfoCore fi, UInt16 id)
 		{
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfo.BYTES_BODY, FileOptions.SequentialScan))
+			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
 			using (BinaryWriter bw = new BinaryWriter(fs))
 			{
 				var li = fi[id];
 				if (li == null) return false;
-				fs.Seek(fi.FilePos + FolderInfo.BYTES_STATUS, SeekOrigin.Begin);
+				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_STATUS, SeekOrigin.Begin);
 				bw.Write(--fi.Quantity);
 				fs.Seek(li.FilePos, SeekOrigin.Begin);
 				bw.Write((UInt16)0);
@@ -179,16 +179,16 @@ namespace DataModule
 			}
 		}
 
-		public void ReadFolderContent(FolderInfo fi)
+		public void ReadFolderContent(FolderInfoCore fi)
 		{
 			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Read, FileShare.None, LogInfo.BYTES_LOGINFO, FileOptions.SequentialScan))
 			using (BinaryReader br = new BinaryReader(fs))
 			{
-				fs.Seek(fi.FilePos + FolderInfo.BYTES_BODY, SeekOrigin.Begin);
+				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_BODY, SeekOrigin.Begin);
 				fi.ReadLoginfosFromFile(br);
 			}
 		}
 
-		public ReadOnlyCollection<FolderInfo> Folders => _folders.AsReadOnly();
+		public ReadOnlyCollection<FolderInfoCore> Folders => _folders.AsReadOnly();
 	}
 }
