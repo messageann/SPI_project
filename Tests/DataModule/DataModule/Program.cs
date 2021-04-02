@@ -20,6 +20,7 @@ namespace DataModule
                 DataService dt = new DataService(p);
                 dt.Init();
                 dt.AddNewLogInfo(dt.Folders[0], "li1", "descrLI", "clogin", "cpass");
+                dt.AddNewLogInfo(dt.Folders[0], "test", "ss", "cc", "pp");
                 dt.RemoveFolder(2);
             }
 
