@@ -7,36 +7,13 @@ namespace DataModule
     {
         static void Main(string[] args)
         {
-            string p = @"bdsdjl";
+            string p = @"D:\TestCore_testfolder\dataENC";
             if (File.Exists(p)) File.Delete(p);
-            {
-                DataService dt = new DataService(p);
-                dt.Init();
-                dt.AddNewFolder(StatusEnum.Normal, "name1", "descr1");
-                dt.AddNewFolder(StatusEnum.X4, "namex4", "descrx4");
-            }
-
-            {
-                DataService dt = new DataService(p);
-                dt.Init();
-                dt.AddNewLogInfo(dt.Folders[0], "li1", "descrLI", "clogin", "cpass");
-                dt.AddNewLogInfo(dt.Folders[0], "test", "ss", "cc", "pp");
-                dt.RemoveFolder(2);
-            }
-
-            {
-                DataService dt = new DataService(p);
-                dt.Init();
-                foreach (var f in dt.Folders)
-                {
-                    dt.ReadFolderContent(f);
-                    Console.WriteLine(f.Name);
-                    foreach (var l in f._logInfos)
-                    {
-                        Console.WriteLine(l.Name);
-                    }
-                }
-            }
+			{
+                DataService ds = new DataService(p);
+                ds.Init();
+                //ds.RegLogInfo(new Models.FolderInfo())
+			}            
         }
     }
 }

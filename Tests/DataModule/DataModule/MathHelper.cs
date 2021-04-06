@@ -2,10 +2,10 @@
 
 namespace DataModule
 {
-	public static class MathHelper
+	internal static class MathHelper
 	{
 		//check alternatives
-		public static UInt16 ToTheUpperPowerOf2(this UInt16 source)
+		public static UInt16 ToUpperPowerOf2(this UInt16 source)
 		{
 			UInt16 power = 0;
 			while (source > 0)
@@ -15,7 +15,7 @@ namespace DataModule
 			}
 			return (ushort)(1 << power);
 		}
-		public static int EqualOrLess(this int source, int max) => source > max ? max : source;
+		//public static int EqualOrLess(this int source, int max) => source > max ? max : source;
 	}
 
 }

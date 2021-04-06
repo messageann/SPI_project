@@ -2,193 +2,261 @@
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
+using System.Text;
+using System.Threading.Tasks;
+using DataModule.Models;
 
 namespace DataModule
 {
-	public class DataService
+	public class DataService : IDisposable
 	{
-		#region app extra data consts
-		private const byte _bytesPerExtradata = 100;
+		#region CONSTS
+		internal const int DEFAULT_FOLDERS_COUNT = 16;
 
+		internal const byte BYTES_LASTLOGINFOID = 2;
+		internal const byte BYTES_LASTFOLDERINFOID = 2;
+		internal const byte BYTES_FOLDERSCOUNT = 2;
+		internal const byte BYTES_EMPTYFOLDERSCOUNT = 2;
 
-		private const byte _bytesPerLastLoginfoId = 2;//uint16
-		private const byte _bytesPerLastFolderinfoId = 2;//uint16
-		private const byte _bytesPerFoldersCount = 2;//uint16
-		private const byte _bytesPerEmptyFoldersCount = 2;//uint16
+		internal const byte BYTES_BODY = 100;
+		#endregion //CONSTS
 
-		private const int DEFAULT_FOLDERS_COUNT = 16;
-		#endregion app extra data consts
-
-		#region fields
+		#region BODY FIELDS
 		private UInt16 _lastLoginfoId;
 		private UInt16 _lastFolderinfoId;
 		private UInt16 _foldersCount;
 		private UInt16 _emptyFoldersCount;
-		private readonly string _dataPath;
+
+		#endregion //BODY FIELDS
+
+		#region APP FIELDS
+		private readonly FileInfo _dataFile;
+		//private FileStream _DFS;
+		private readonly List<FolderInfo> _folders;
 		private readonly Queue<long> _emptyFolderPoses;
 
-		private readonly List<FolderInfoCore> _folders;
-		#endregion fields
-
+		//private readonly byte[] _bufferSmallConverting;
+		//private readonly byte[] _bufferIO;
+		private readonly EncodingService _encService;
+		private readonly CryptService _cryptService;
+		#endregion APP FIELDS
 
 		public DataService(string dataPath)
 		{
-			_dataPath = dataPath;
+			_dataFile = new FileInfo(dataPath);
 			_emptyFolderPoses = new Queue<long>(DEFAULT_FOLDERS_COUNT);
-			_folders = new List<FolderInfoCore>(DEFAULT_FOLDERS_COUNT);
+			_folders = new List<FolderInfo>(DEFAULT_FOLDERS_COUNT);
+			//_bufferSmallConverting = new byte[8];//8 for 64 bit values
+			//_bufferIO = new byte[192];//find min of maxes
+			_encService = new EncodingService(new UTF8Encoding(), 96, 192);
+			_cryptService = new CryptService(_dataFile, maxCryptBlock: 512);
 		}
+
 		public void Init()
 		{
-			if (!File.Exists(_dataPath))
+			_lastLoginfoId = _cryptService.ReadUInt16Core();
+			_lastFolderinfoId = _cryptService.ReadUInt16Core();
+			_foldersCount = _cryptService.ReadUInt16Core();
+			_emptyFoldersCount = _cryptService.ReadUInt16Core();
+			_cryptService.Seek(BYTES_BODY);
+
+			_folders.Capacity = _foldersCount.ToUpperPowerOf2();
+
+			long preFolderPos;
+			StatusEnum status;
+
+			while (_emptyFolderPoses.Count < _emptyFoldersCount)
 			{
-				using (var fs = new FileStream(_dataPath, FileMode.CreateNew, FileAccess.Write, FileShare.None, 1, FileOptions.SequentialScan))
+				preFolderPos = _cryptService.Position;
+				status = (StatusEnum)_cryptService.ReadUInt32Core();
+				if ((status & StatusEnum.NULL) != 0) //null folder
 				{
-					fs.SetLength(_bytesPerExtradata);
+					_emptyFolderPoses.Enqueue(preFolderPos);
+					_cryptService.Seek(preFolderPos + FolderInfo.BYTES_NULLFOLDER);
 				}
-				return;
+				else //non-null folder
+				{
+					_folders.Add(ReadFolderInfoFromFile(status));
+				}
 			}
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Read, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
-			using (BinaryReader br = new BinaryReader(fs))
+			while (_folders.Count < _foldersCount)
 			{
-				_lastLoginfoId = br.ReadUInt16();
-				_lastFolderinfoId = br.ReadUInt16();
-				_foldersCount = br.ReadUInt16();
-				_emptyFoldersCount = br.ReadUInt16();
-				fs.Seek(_bytesPerExtradata, SeekOrigin.Begin);
-				long preFolderPos;
-				UInt32 status;
-				byte[] buffer = new byte[FolderInfoCore.BYTES_BODY];
-				_folders.Capacity = _foldersCount.ToTheUpperPowerOf2();
-				while (_emptyFolderPoses.Count < _emptyFoldersCount)
-				{
-					preFolderPos = fs.Position;
-					status = br.ReadUInt32();
-					if ((status & (uint)StatusEnum.NULL) == 1)//null folder
-					{
-						_emptyFolderPoses.Enqueue(preFolderPos);
-						fs.Seek(preFolderPos + FolderInfoCore.BYTES_BODY + FolderInfoCore.DEFAULT_QUANTITY * LogInfo.EmptyLogInfo.Length, SeekOrigin.Begin);
-					}
-					else//non null folder
-					{
-						fs.Seek(preFolderPos, SeekOrigin.Begin);
-						_folders.Add(FolderInfoCore.ReadBodyFromFile(br));
-					}
-				}
-				while (_folders.Count < _foldersCount)
-				{
-					preFolderPos = fs.Position;
-					_folders.Add(FolderInfoCore.ReadBodyFromFile(br));
-				}
+				preFolderPos = _cryptService.Position;
+				_folders.Add(ReadFolderInfoFromFile((StatusEnum)_cryptService.ReadUInt32Core()));
 			}
 		}
 
-		public void AddNewFolder(StatusEnum status, string name, string descr)
+		//#region CORE IO
+		////private unsafe void WriteCore(UInt16 value)
+		////{
+		////	fixed(byte* bp = _bufferSmallConverting)
+		////	{
+		////		*((UInt16*)bp) = value;
+		////	}
+		////	_mem.Write(_bufferSmallConverting, 0, 2);
+		////}
+		////private unsafe void WriteCore(Int32 value)
+		////{
+		////	fixed (byte* bp = _bufferSmallConverting)
+		////	{
+		////		*((Int32*)bp) = value;
+		////	}
+		////	_mem.Write(_bufferSmallConverting, 0, 4);
+		////}
+		////private unsafe void WriteCore(UInt32 value)
+		////{
+		////	fixed (byte* bp = _bufferSmallConverting)
+		////	{
+		////		*((UInt32*)bp) = value;
+		////	}
+		////	_mem.Write(_bufferSmallConverting, 0, 4);
+		////}
+		////private unsafe void WriteCore(DateTime value)
+		////{
+		////	fixed(byte* bp = _bufferSmallConverting)
+		////	{
+		////		*((Int64*)bp) = value.ToBinary();
+		////	}
+		////	_mem.Write(_bufferSmallConverting, 0, 8);
+		////}
+
+		//private unsafe UInt16 ReadUInt16Core()
+		//{
+		//	_DFS.Read(_bufferSmallConverting, 0, 4);
+		//	fixed (byte* bp = _bufferSmallConverting)
+		//	{
+		//		return *((UInt16*)bp);
+		//	}
+		//}
+		//private unsafe int ReadInt32Core()
+		//{
+		//	_DFS.Read(_bufferSmallConverting, 0, 4);
+		//	fixed (byte* bp = _bufferSmallConverting)
+		//	{
+		//		return *((Int32*)bp);
+		//	}
+		//}
+		//private unsafe UInt32 ReadUInt32Core()
+		//{
+		//	_DFS.Read(_bufferSmallConverting, 0, 4);
+		//	fixed (byte* bp = _bufferSmallConverting)
+		//	{
+		//		return *((UInt32*)bp);
+		//	}
+		//}
+		//private unsafe DateTime ReadDateTimeCore()
+		//{
+		//	_DFS.Read(_bufferSmallConverting, 0, 8);
+		//	fixed (byte* bp = _bufferSmallConverting)
+		//	{
+		//		return DateTime.FromBinary(*((long*)bp));
+		//	}
+		//}
+
+		//private Span<byte> ReadBytes(int count)
+		//{
+		//	var res = new Span<byte>(_bufferIO, 0, count);
+		//	_DFS.Read(res);
+		//	return res;
+		//}
+		//#endregion //CORE IO
+
+		#region DATA IO
+		private FolderInfo ReadFolderInfoFromFile(StatusEnum status)
 		{
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
-			using (BinaryWriter bw = new BinaryWriter(fs))
-			{
-				fs.Seek(_bytesPerLastLoginfoId, SeekOrigin.Begin);
-				bw.Write(++_lastFolderinfoId);
-				bw.Write(++_foldersCount);
-				FolderInfoCore res;
-				if (_emptyFolderPoses.Count > 0 && status == StatusEnum.Normal)//if open space exists
-				{
-					fs.Seek(_emptyFolderPoses.Dequeue(), SeekOrigin.Begin);
-					res = new FolderInfoCore(fs.Position, status, 0, _lastFolderinfoId, name, descr);
-					res.WriteBodyToFile(bw);
-					for (int i = 0; i < FolderInfoCore.DEFAULT_QUANTITY; i++)
-					{
-						fs.Write(LogInfo.EmptyLogInfo);
-					}
-				}
-				else//to EOF
-				{
-					fs.Seek(fs.Length, SeekOrigin.Begin);
-					res = new FolderInfoCore(fs.Position, status, 0, _lastFolderinfoId, name, descr);
-					res.WriteBodyToFile(bw);
-				}
-				_folders.Add(res);
-			}
+			var res = new FolderInfo(_cryptService.Position - FolderInfo.BYTES_STATUS, status, _cryptService.ReadUInt16Core(), _cryptService.ReadUInt16Core(),
+				_encService.GetString(_cryptService.ReadBytes(FolderInfo.BYTES_NAME)), _encService.GetString(_cryptService.ReadBytes(FolderInfo.BYTES_DESCR)));
+			_cryptService.Seek(res.FilePos + res.GetTotalByteLength());
+			return res;
 		}
 
-		public bool RemoveFolder(UInt16 id)
+		//at current pos
+		private void WriteLogInfo(LogInfo li)
 		{
-			for (int i = 0; i < _folders.Count; i++)
-			{
-				if (_folders[i].Id == id)
-				{
-					var fi = _folders[i];
-					using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
-					using (BinaryWriter bw = new BinaryWriter(fs))
-					{
-						fs.Seek(_bytesPerLastLoginfoId + _bytesPerLastFolderinfoId, SeekOrigin.Begin);
-						bw.Write(--_foldersCount);
-						_emptyFoldersCount += (ushort)fi.StatusToMulti();
-						bw.Write(_emptyFoldersCount);
-						fs.Seek(fi.FilePos, SeekOrigin.Begin);
-						if (fi.Status == StatusEnum.Normal)
-						{
-							bw.Write((UInt32)StatusEnum.NULL);
-						}
-						else
-						{
-							FolderInfoCore.WriteNullFoldersToFile(bw, fi.StatusToMulti());
-						}
-					}
-					return true;
-				}
-			}
-			return false;
+			li.FilePos = _cryptService.Position;
+			_cryptService.Write(li.Id);
+			_cryptService.Write((UInt32)li.Attributes);
+			_cryptService.Write(_encService.GetBytes(li.Name, LogInfo.BYTES_NAME));
+			_cryptService.Write(_encService.GetBytes(li.Descr, LogInfo.BYTES_DESCR));
+			_cryptService.Write(li.Date);
+			_cryptService.Write(li.CLogin);
+			_cryptService.Write(li.CPass);
+			_cryptService.FlushToFile();
 		}
-
-		public bool AddNewLogInfo(FolderInfoCore fi, string name, string descr, string clogin, string cpass)
+		private void WriteNewLogInfo(FolderInfo fi, LogInfo li)
 		{
-			if (fi._logInfos.Count == fi._logInfos.Capacity) return false;
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.ReadWrite, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
-			using (BinaryWriter bw = new BinaryWriter(fs))
-			using (BinaryReader br = new BinaryReader(fs))
-			{
-				bw.Write(++_lastLoginfoId);
-				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_STATUS, SeekOrigin.Begin);
-				bw.Write(++fi.Quantity);
-				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_BODY, SeekOrigin.Begin);
-				while (br.ReadUInt16() != 0)
-				{
-					fs.Seek(fs.Position + LogInfo.BYTES_LOGINFO - LogInfo.BYTES_ID, SeekOrigin.Begin);
-				}
-				fs.Seek(fs.Position - LogInfo.BYTES_ID, SeekOrigin.Begin);
-				LogInfo res = new LogInfo(fs.Position, _lastLoginfoId, name, descr, DateTime.UtcNow, clogin, cpass);
-				res.WriteToFile(bw);
-				fi._logInfos.Add(res);
-			}
-			return true;
+			_cryptService.Seek(GetFreePosForLogInfo(fi));
+			WriteLogInfo(li);
 		}
 
-		public bool RemoveLogInfo(FolderInfoCore fi, UInt16 id)
+		//at current pos
+		private void WriteFolderInfo(FolderInfo fi)
 		{
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Write, FileShare.None, FolderInfoCore.BYTES_BODY, FileOptions.SequentialScan))
-			using (BinaryWriter bw = new BinaryWriter(fs))
+			fi.FilePos = _cryptService.Position;
+			_cryptService.Write((UInt32)fi.Status);
+			_cryptService.Write(fi.Count);
+			_cryptService.Write(fi.Id);
+			_cryptService.Write(_encService.GetBytes(fi.Name, FolderInfo.BYTES_NAME));
+			_cryptService.Write(_encService.GetBytes(fi.Description, FolderInfo.BYTES_DESCR));
+			_cryptService.FlushToFile();
+			int i;
+			for (i = 0; i < fi.Count; i++)
 			{
-				var li = fi[id];
-				if (li == null) return false;
-				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_STATUS, SeekOrigin.Begin);
-				bw.Write(--fi.Quantity);
-				fs.Seek(li.FilePos, SeekOrigin.Begin);
-				bw.Write((UInt16)0);
-				return true;
+				WriteLogInfo(fi[i]);
+			}
+			for (; i < fi.Capacity; i++)
+			{
+				_cryptService.Write(LogInfo.EmptyLogInfo);
+				_cryptService.FlushToFile();
 			}
 		}
-
-		public void ReadFolderContent(FolderInfoCore fi)
+		private void WriteNewFolderInfo(FolderInfo fi)
 		{
-			using (var fs = new FileStream(_dataPath, FileMode.Open, FileAccess.Read, FileShare.None, LogInfo.BYTES_LOGINFO, FileOptions.SequentialScan))
-			using (BinaryReader br = new BinaryReader(fs))
-			{
-				fs.Seek(fi.FilePos + FolderInfoCore.BYTES_BODY, SeekOrigin.Begin);
-				fi.ReadLoginfosFromFile(br);
-			}
+			_cryptService.Seek(GetFreePosForFolderInfo());
+			WriteFolderInfo(fi);
 		}
 
-		public ReadOnlyCollection<FolderInfoCore> Folders => _folders.AsReadOnly();
+		private long GetFreePosForLogInfo(FolderInfo fi)
+		{
+			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_BODY);
+			UInt16 id;
+			long prepos;
+			for (int i = 0; i < fi.Capacity; i++)
+			{
+				prepos = _cryptService.Position;
+				id = _cryptService.ReadUInt16Core();
+				if (id == 0) return prepos;
+				_cryptService.Seek(prepos + LogInfo.BYTES_LOGINFO);
+			}
+			throw new ArgumentOutOfRangeException("fi");
+		}
+		private long GetFreePosForFolderInfo()
+		{
+			if (_emptyFolderPoses.TryDequeue(out var res)) return res;
+			return _cryptService.Length;
+		}
+		#endregion //DATA IO
+
+		#region DATA REG
+		//public Task RegLogInfo(FolderInfo fi, string name, string descr, string login, string pass, CryptMethod cryptMethod)
+		//{
+		//	if (fi.IsFull) throw new ArgumentOutOfRangeException();
+		//	var pos = GetFreePosForLogInfo(fi);
+		//	var li = new LogInfo(pos, ++_lastLoginfoId, cryptMethod.Attrs, name, descr, DateTime.UtcNow,
+		//		_encService.GetBytes(login, LogInfo.BYTES_CLOGIN), _encService.GetBytes(pass, LogInfo.BYTES_CPASS).ToArray);
+		//	var iotask = Task.Run(() => WriteNewLogInfo(fi, new LogInfo(pos, )));
+		//	fi.Add(li);
+		//	return iotask;
+		//}
+		//public Task RegFolderInfo(StatusEnum status, string name, string descr)
+		//{
+		//	//var iotask = 
+		//}
+		#endregion //DATA REG
+
+		public void Dispose()
+		{
+			((IDisposable)_cryptService)?.Dispose();
+		}
 	}
 }

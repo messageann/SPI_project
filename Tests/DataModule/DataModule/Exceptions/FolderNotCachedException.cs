@@ -1,4 +1,5 @@
-﻿using System;
+﻿using DataModule.Models;
+using System;
 
 namespace DataModule.Exceptions
 {
@@ -6,7 +7,7 @@ namespace DataModule.Exceptions
 	public class FolderNotCachedException : Exception
 	{
 		public FolderNotCachedException() { }
-		internal FolderNotCachedException(FolderInfoCore fi) : base($"Folderinfo[id:{fi.Id}] not cached!") { }
+		internal FolderNotCachedException(FolderInfo fi) : base($"Folderinfo[id:{fi.Id}] not cached!") { }
 		protected FolderNotCachedException(
 		  System.Runtime.Serialization.SerializationInfo info,
 		  System.Runtime.Serialization.StreamingContext context) : base(info, context) { }
