@@ -4,6 +4,7 @@ using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
 using System.Threading.Tasks;
+using DataModule.Exceptions;
 using DataModule.Models;
 
 namespace DataModule
@@ -24,51 +25,49 @@ namespace DataModule
 		#region BODY FIELDS
 		private UInt16 _lastLoginfoId;
 		private UInt16 _lastFolderinfoId;
-		private UInt16 _foldersCount;
-		private UInt16 _emptyFoldersCount;
+		private UInt16 FoldersCount => (ushort)_folders.Count;
+		private UInt16 EmptyFoldersCount => (ushort)_emptyFolderPoses.Count;
 
 		#endregion //BODY FIELDS
 
 		#region APP FIELDS
 		private readonly FileInfo _dataFile;
-		//private FileStream _DFS;
+
 		private readonly List<FolderInfo> _folders;
 		private readonly Queue<long> _emptyFolderPoses;
 
-		//private readonly byte[] _bufferSmallConverting;
-		//private readonly byte[] _bufferIO;
 		private readonly EncodingService _encService;
 		private readonly CryptService _cryptService;
 		#endregion APP FIELDS
+
+		public ReadOnlyCollection<FolderInfo> Folders => _folders.AsReadOnly();
 
 		public DataService(string dataPath)
 		{
 			_dataFile = new FileInfo(dataPath);
 			_emptyFolderPoses = new Queue<long>(DEFAULT_FOLDERS_COUNT);
 			_folders = new List<FolderInfo>(DEFAULT_FOLDERS_COUNT);
-			//_bufferSmallConverting = new byte[8];//8 for 64 bit values
-			//_bufferIO = new byte[192];//find min of maxes
 			_encService = new EncodingService(new UTF8Encoding(), 96, 192);
 			_cryptService = new CryptService(_dataFile, maxCryptBlock: 512);
 		}
 
 		public void Init()
 		{
-			_lastLoginfoId = _cryptService.ReadUInt16Core();
-			_lastFolderinfoId = _cryptService.ReadUInt16Core();
-			_foldersCount = _cryptService.ReadUInt16Core();
-			_emptyFoldersCount = _cryptService.ReadUInt16Core();
+			_lastLoginfoId = _cryptService.ReadUInt16();
+			_lastFolderinfoId = _cryptService.ReadUInt16();
+			var _foldersCountT = _cryptService.ReadUInt16();
+			var _emptyFoldersCountT = _cryptService.ReadUInt16();
 			_cryptService.Seek(BYTES_BODY);
 
-			_folders.Capacity = _foldersCount.ToUpperPowerOf2();
+			_folders.Capacity = _foldersCountT > 64 ? _foldersCountT.ToUpperPowerOf2() : 64;
 
 			long preFolderPos;
 			StatusEnum status;
 
-			while (_emptyFolderPoses.Count < _emptyFoldersCount)
+			while (_emptyFolderPoses.Count < _emptyFoldersCountT)
 			{
 				preFolderPos = _cryptService.Position;
-				status = (StatusEnum)_cryptService.ReadUInt32Core();
+				status = (StatusEnum)_cryptService.ReadUInt32();
 				if ((status & StatusEnum.NULL) != 0) //null folder
 				{
 					_emptyFolderPoses.Enqueue(preFolderPos);
@@ -76,120 +75,35 @@ namespace DataModule
 				}
 				else //non-null folder
 				{
-					_folders.Add(ReadFolderInfoFromFile(status));
+					_folders.Add(ReadFolderInfoBody(status));
 				}
 			}
-			while (_folders.Count < _foldersCount)
+			while (_folders.Count < _foldersCountT)
 			{
 				preFolderPos = _cryptService.Position;
-				_folders.Add(ReadFolderInfoFromFile((StatusEnum)_cryptService.ReadUInt32Core()));
+				_folders.Add(ReadFolderInfoBody((StatusEnum)_cryptService.ReadUInt32()));
 			}
 		}
 
-		//#region CORE IO
-		////private unsafe void WriteCore(UInt16 value)
-		////{
-		////	fixed(byte* bp = _bufferSmallConverting)
-		////	{
-		////		*((UInt16*)bp) = value;
-		////	}
-		////	_mem.Write(_bufferSmallConverting, 0, 2);
-		////}
-		////private unsafe void WriteCore(Int32 value)
-		////{
-		////	fixed (byte* bp = _bufferSmallConverting)
-		////	{
-		////		*((Int32*)bp) = value;
-		////	}
-		////	_mem.Write(_bufferSmallConverting, 0, 4);
-		////}
-		////private unsafe void WriteCore(UInt32 value)
-		////{
-		////	fixed (byte* bp = _bufferSmallConverting)
-		////	{
-		////		*((UInt32*)bp) = value;
-		////	}
-		////	_mem.Write(_bufferSmallConverting, 0, 4);
-		////}
-		////private unsafe void WriteCore(DateTime value)
-		////{
-		////	fixed(byte* bp = _bufferSmallConverting)
-		////	{
-		////		*((Int64*)bp) = value.ToBinary();
-		////	}
-		////	_mem.Write(_bufferSmallConverting, 0, 8);
-		////}
-
-		//private unsafe UInt16 ReadUInt16Core()
-		//{
-		//	_DFS.Read(_bufferSmallConverting, 0, 4);
-		//	fixed (byte* bp = _bufferSmallConverting)
-		//	{
-		//		return *((UInt16*)bp);
-		//	}
-		//}
-		//private unsafe int ReadInt32Core()
-		//{
-		//	_DFS.Read(_bufferSmallConverting, 0, 4);
-		//	fixed (byte* bp = _bufferSmallConverting)
-		//	{
-		//		return *((Int32*)bp);
-		//	}
-		//}
-		//private unsafe UInt32 ReadUInt32Core()
-		//{
-		//	_DFS.Read(_bufferSmallConverting, 0, 4);
-		//	fixed (byte* bp = _bufferSmallConverting)
-		//	{
-		//		return *((UInt32*)bp);
-		//	}
-		//}
-		//private unsafe DateTime ReadDateTimeCore()
-		//{
-		//	_DFS.Read(_bufferSmallConverting, 0, 8);
-		//	fixed (byte* bp = _bufferSmallConverting)
-		//	{
-		//		return DateTime.FromBinary(*((long*)bp));
-		//	}
-		//}
-
-		//private Span<byte> ReadBytes(int count)
-		//{
-		//	var res = new Span<byte>(_bufferIO, 0, count);
-		//	_DFS.Read(res);
-		//	return res;
-		//}
-		//#endregion //CORE IO
-
 		#region DATA IO
-		private FolderInfo ReadFolderInfoFromFile(StatusEnum status)
+		//read at current pos
+		private FolderInfo ReadFolderInfoBody(StatusEnum status)
 		{
-			var res = new FolderInfo(_cryptService.Position - FolderInfo.BYTES_STATUS, status, _cryptService.ReadUInt16Core(), _cryptService.ReadUInt16Core(),
+			var res = new FolderInfo(_cryptService.Position - FolderInfo.BYTES_STATUS, status, _cryptService.ReadUInt16(), _cryptService.ReadUInt16(),
 				_encService.GetString(_cryptService.ReadBytes(FolderInfo.BYTES_NAME)), _encService.GetString(_cryptService.ReadBytes(FolderInfo.BYTES_DESCR)));
 			_cryptService.Seek(res.FilePos + res.GetTotalByteLength());
 			return res;
 		}
-
-		//at current pos
-		private void WriteLogInfo(LogInfo li)
+		private LogInfo ReadLogInfo(UInt16 id)
 		{
-			li.FilePos = _cryptService.Position;
-			_cryptService.Write(li.Id);
-			_cryptService.Write((UInt32)li.Attributes);
-			_cryptService.Write(_encService.GetBytes(li.Name, LogInfo.BYTES_NAME));
-			_cryptService.Write(_encService.GetBytes(li.Descr, LogInfo.BYTES_DESCR));
-			_cryptService.Write(li.Date);
-			_cryptService.Write(li.CLogin);
-			_cryptService.Write(li.CPass);
-			_cryptService.FlushToFile();
-		}
-		private void WriteNewLogInfo(FolderInfo fi, LogInfo li)
-		{
-			_cryptService.Seek(GetFreePosForLogInfo(fi));
-			WriteLogInfo(li);
+			return new LogInfo(_cryptService.Position - LogInfo.BYTES_ID, id, (LogInfoAttributes)_cryptService.ReadUInt32(),
+				_encService.GetString(_cryptService.ReadBytes(LogInfo.BYTES_NAME)), _encService.GetString(_cryptService.ReadBytes(LogInfo.BYTES_DESCR)),
+				_cryptService.ReadDateTime(), _cryptService.ReadBytes(LogInfo.BYTES_CLOGIN).ToArray(), _cryptService.ReadBytes(LogInfo.BYTES_CPASS).ToArray());
 		}
 
-		//at current pos
+		//find pos and read
+
+		//write at current pos
 		private void WriteFolderInfo(FolderInfo fi)
 		{
 			fi.FilePos = _cryptService.Position;
@@ -210,10 +124,32 @@ namespace DataModule
 				_cryptService.FlushToFile();
 			}
 		}
+		private void WriteLogInfo(LogInfo li)
+		{
+			li.FilePos = _cryptService.Position;
+			_cryptService.Write(li.Id);
+			_cryptService.Write((UInt32)li.Attributes);
+			_cryptService.Write(_encService.GetBytes(li.Name, LogInfo.BYTES_NAME));
+			_cryptService.Write(_encService.GetBytes(li.Descr, LogInfo.BYTES_DESCR));
+			_cryptService.Write(li.Date);
+			_cryptService.Write(li.CLogin);
+			_cryptService.Write(li.CPass);
+			_cryptService.FlushToFile();
+		}
+
+		//find pos and write
 		private void WriteNewFolderInfo(FolderInfo fi)
 		{
-			_cryptService.Seek(GetFreePosForFolderInfo());
+			_cryptService.Seek(GetFreePosForFolderInfo(fi.Status));
 			WriteFolderInfo(fi);
+		}
+		private void WriteNewLogInfo(FolderInfo fi, LogInfo li)
+		{
+			_cryptService.Seek(GetFreePosForLogInfo(fi));
+			WriteLogInfo(li);
+			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_STATUS);
+			_cryptService.Write((UInt16)(fi.Count + 1));
+			_cryptService.FlushToFile();
 		}
 
 		private long GetFreePosForLogInfo(FolderInfo fi)
@@ -224,35 +160,69 @@ namespace DataModule
 			for (int i = 0; i < fi.Capacity; i++)
 			{
 				prepos = _cryptService.Position;
-				id = _cryptService.ReadUInt16Core();
+				id = _cryptService.ReadUInt16();
 				if (id == 0) return prepos;
 				_cryptService.Seek(prepos + LogInfo.BYTES_LOGINFO);
 			}
 			throw new ArgumentOutOfRangeException("fi");
 		}
-		private long GetFreePosForFolderInfo()
+		private long GetFreePosForFolderInfo(StatusEnum status)
 		{
-			if (_emptyFolderPoses.TryDequeue(out var res)) return res;
-			return _cryptService.Length;
+			return (((status & StatusEnum.Normal) != 0) && _emptyFolderPoses.TryDequeue(out long res)) ? res : _cryptService.Length;
+		}
+
+		private void UpdateBody()
+		{
+			_cryptService.Seek(0);
+			_cryptService.Write(_lastLoginfoId);
+			_cryptService.Write(_lastFolderinfoId);
+			_cryptService.Write(FoldersCount);
+			_cryptService.Write(EmptyFoldersCount);
+			_cryptService.FlushToFile();
 		}
 		#endregion //DATA IO
 
 		#region DATA REG
-		//public Task RegLogInfo(FolderInfo fi, string name, string descr, string login, string pass, CryptMethod cryptMethod)
-		//{
-		//	if (fi.IsFull) throw new ArgumentOutOfRangeException();
-		//	var pos = GetFreePosForLogInfo(fi);
-		//	var li = new LogInfo(pos, ++_lastLoginfoId, cryptMethod.Attrs, name, descr, DateTime.UtcNow,
-		//		_encService.GetBytes(login, LogInfo.BYTES_CLOGIN), _encService.GetBytes(pass, LogInfo.BYTES_CPASS).ToArray);
-		//	var iotask = Task.Run(() => WriteNewLogInfo(fi, new LogInfo(pos, )));
-		//	fi.Add(li);
-		//	return iotask;
-		//}
-		//public Task RegFolderInfo(StatusEnum status, string name, string descr)
-		//{
-		//	//var iotask = 
-		//}
+		public void RegLogInfo(FolderInfo fi, string name, string descr, string login, string pass, CryptMethod cryptMethod)
+		{
+			if (fi.IsFull) throw new ArgumentOutOfRangeException("FolderInfo.Count", fi.Count, "Folder is full!");
+			var li = new LogInfo(++_lastLoginfoId, cryptMethod.Attrs, name, descr, DateTime.UtcNow,
+				_cryptService.Crypt(cryptMethod, _encService.GetBytes(login, LogInfo.BYTES_CLOGIN)).ToArray(),
+				_cryptService.Crypt(cryptMethod, _encService.GetBytes(pass, LogInfo.BYTES_CPASS)).ToArray()); //create loginfo
+			WriteNewLogInfo(fi, li); //write to file(also increment 'count' in folderinfo) with auto-pos
+			fi.Add(li); //add to memory(will not be added if folder not cached)
+			UpdateBody(); //update body(folders_count etc..)
+		}
+		public void RegFolderInfo(StatusEnum status, string name, string descr)
+		{
+			var fi = new FolderInfo(status, 0, ++_lastFolderinfoId, name, descr);
+			WriteNewFolderInfo(fi); //write to file(find pos to fit folder)
+			_folders.Add(fi); //add to memory
+			UpdateBody(); //update body(last folder ID, folders count, <empty_folders count>?)
+		}
 		#endregion //DATA REG
+
+		#region DATA GET
+		public void ReadFolderInfoContent(FolderInfo fi, bool forceUpdate = false)
+		{
+			if (fi.IsCached)
+			{
+				if (!forceUpdate) throw new FolderCachedException(fi);
+				else fi.ClearCache();
+			}
+			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_BODY);
+			var lis = fi.BeginCache();
+			UInt16 id;
+			UInt16 found = 0;
+			while (found < fi.Count)
+			{
+				id = _cryptService.ReadUInt16();
+				if (id == 0) _cryptService.Seek(_cryptService.Position + LogInfo.BYTES_LOGINFO - LogInfo.BYTES_ID);
+				else lis[found++] = ReadLogInfo(id);
+			}
+			fi.EndCache(found);
+		}
+		#endregion //DATA GET
 
 		public void Dispose()
 		{
