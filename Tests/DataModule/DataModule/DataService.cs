@@ -101,8 +101,6 @@ namespace DataModule
 				_cryptService.ReadDateTime(), _cryptService.ReadBytes(LogInfo.BYTES_CLOGIN).ToArray(), _cryptService.ReadBytes(LogInfo.BYTES_CPASS).ToArray());
 		}
 
-		//find pos and read
-
 		//write at current pos
 		private void WriteFolderInfo(FolderInfo fi)
 		{
@@ -120,7 +118,7 @@ namespace DataModule
 			}
 			for (; i < fi.Capacity; i++)
 			{
-				_cryptService.Write(LogInfo.EmptyLogInfo);
+				_cryptService.Write(LogInfo.EmptyLogInfo); //this is slow, mb worth to try write big array instead of few smalls?
 				_cryptService.FlushToFile();
 			}
 		}
