@@ -175,6 +175,7 @@ namespace DataModule.Models
 			//_logInfos[_tail] = value;
 			_logInfos[_liMemCount++] = value;
 			_count++;
+			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value));
 			return true;
 		}
 
@@ -194,6 +195,7 @@ namespace DataModule.Models
 			Array.Clear(_logInfos, 0, _logInfos.Length);
 			_liMemCount = 0;
 			_cached = false;
+			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 		}
 
 		internal LogInfo[] BeginCache()
@@ -209,6 +211,10 @@ namespace DataModule.Models
 				_liMemCount = count;
 				_count = (ushort)count;
 				_cached = true;
+				foreach(var t in this)
+				{
+					NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, t));
+				}
 			}
 			else throw new FolderCachedException(this);
 		}
