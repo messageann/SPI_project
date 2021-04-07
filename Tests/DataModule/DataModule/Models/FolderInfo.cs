@@ -324,6 +324,7 @@ namespace DataModule.Models
 			if (IsFull) return false;
 			_tail = (_tail + 1) % _logInfos.Length;
 			_logInfos[_tail] = value;
+			_count++;
 			return true;
 		}
 
