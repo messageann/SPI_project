@@ -39,9 +39,8 @@ namespace DataModule.Models
 
 		internal long FilePos;
 
-		public LogInfo(long filePos, ushort id, LogInfoAttributes attributes, string name, string descr, DateTime date, byte[] clogin, byte[] cpass)
+		public LogInfo(ushort id, LogInfoAttributes attributes, string name, string descr, DateTime date, byte[] clogin, byte[] cpass)
 		{
-			FilePos = filePos;
 			Id = id;
 			Attributes = attributes;
 			Name = name;
