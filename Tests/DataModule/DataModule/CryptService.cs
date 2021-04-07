@@ -89,6 +89,7 @@ namespace DataModule
 		{
 			_mem.WriteTo(_DFS);
 			_DFS.Flush(true);
+			_mem.Position = 0;
 		}
 
 		internal unsafe UInt16 ReadUInt16Core()
@@ -133,7 +134,7 @@ namespace DataModule
 			return res;
 		}
 
-		internal void Crypt(CryptMethod cryptMethod, byte[] value)
+		internal Span<byte> Crypt(CryptMethod cryptMethod, Span<byte> value)
 		{
 			if ((cryptMethod.Attrs & LogInfoAttributes.L1Crypt) != 0)
 				CryptL1(value, cryptMethod.Skey);
@@ -141,21 +142,22 @@ namespace DataModule
 				CryptL2(value, cryptMethod.Bkey);
 			if ((cryptMethod.Attrs & LogInfoAttributes.L3Crypt) != 0)
 				CryptL3(value, cryptMethod.CKey);
+			return value;
 		}
 
-		private void CryptL1(byte[] value, string Skey)
+		private void CryptL1(Span<byte> value, string Skey)
 		{
 			//implement!
 			return;
 		}
 
-		private void CryptL2(byte[] value, byte Bkey)
+		private void CryptL2(Span<byte> value, byte Bkey)
 		{
 			//implement!
 			return;
 		}
 
-		private void CryptL3(byte[] value, char Ckey)
+		private void CryptL3(Span<byte> value, char Ckey)
 		{
 			//implement!
 			return;
