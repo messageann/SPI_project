@@ -46,14 +46,13 @@ namespace DataModule.Models
 		private readonly LogInfo[] _logInfos;
 		#endregion //BODY FIELDS
 
-		internal long GetTotalByteLength() => BYTES_NULLFOLDER * SizeMultiplier;
-
 		#region APP FIELDS
 		internal long FilePos;
 
-		private int _head;
-
-		private int _tail;
+		//private int _head; //first element
+		//private int _tail; //last element
+		private int _liMemCount;
+		private bool _cached;
 
 		public StatusEnum Status
 		{
@@ -62,14 +61,11 @@ namespace DataModule.Models
 				return _status;
 			}
 		}
-
-		public UInt16 Count => _count;
-
+		public UInt16 Count => _count; //count in file
 		public UInt16 Id
 		{
 			get => _id;
 		}
-
 		public string Name
 		{
 			get
@@ -82,7 +78,6 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-
 		public string Description
 		{
 			get
@@ -95,18 +90,17 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
+		public bool IsCached => _cached;
 
 		public bool IsFull => _count == _logInfos.Length;
-
 		public int Capacity => _logInfos.Length;
 
 		internal readonly int SizeMultiplier;
 		#endregion //APP FIELDS
 
 		#region CONSTRUCTORS
-		internal FolderInfo(long filePos, StatusEnum status, UInt16 count, ushort id, string name, string descr)
+		internal FolderInfo(StatusEnum status, UInt16 count, ushort id, string name, string descr)
 		{
-			FilePos = filePos;
 			_status = status;
 			_count = count;
 			_id = id;
@@ -115,117 +109,36 @@ namespace DataModule.Models
 			SizeMultiplier = (int)(status & StatusEnum.X8) / 2;
 
 			_logInfos = new LogInfo[((int)status / 2 * DEFAULT_QUANTITY)];
-			_head = 0;
-			_tail = 0;
+			_liMemCount = 0;
+			//_head = 0;
+			//_tail = 0;
+			_cached = false;
+		}
+
+		internal FolderInfo(long filePos, StatusEnum status, UInt16 count, ushort id, string name, string descr)
+		{
+			FilePos = filePos;
+			_status = status;
+			_count = count;
+			_id = id;
+			Name = name;
+			Description = descr;
+			SizeMultiplier = (int)(status & AllLengths) / 2;
+
+			_logInfos = new LogInfo[((int)status / 2 * DEFAULT_QUANTITY)];
+			_liMemCount = 0;
+			//_head = 0;
+			//_tail = 0;
+			_cached = false;
 		}
 		#endregion //CONSTRUCTORS
-
-		//#region IO
-		//#region INPUT
-		//public static FolderInfo ReadBodyFromFile(BinaryReader br)
-		//{
-		//	var res = new FolderInfo(br.BaseStream.Position, (StatusEnum)br.ReadUInt32(), br.ReadUInt16(), br.ReadUInt16(),
-		//		Encoding.Default.GetString(br.ReadBytes(BYTES_NAME)), Encoding.Default.GetString(br.ReadBytes(BYTES_DESCR)));
-		//	br.BaseStream.Seek(br.BaseStream.Position + res._logInfos.Capacity * LogInfo.BYTES_LOGINFO + res.GetNullBytes(), SeekOrigin.Begin);
-		//	return res;
-		//}
-
-		//public void ReadLoginfosFromFile(BinaryReader br)
-		//{
-		//	while (_logInfos.Count < Quantity)
-		//	{
-		//		var li = LogInfo.ReadFromFile(br);
-		//		if (li is not null)
-		//		{
-		//			_logInfos.Add(li);
-		//			li.Parent = this;
-		//		}
-
-		//	}
-		//}
-		//#endregion //INPUT
-
-		//#region OUTPUT
-		//public static void WriteNullFoldersToFile(BinaryWriter bw, uint count)
-		//{
-		//	for (int y = 0; y < count; y++)
-		//	{
-		//		bw.Write(NullBody);
-		//		for (int i = 0; i < DEFAULT_QUANTITY; i++)
-		//		{
-		//			bw.Write(LogInfo.EmptyLogInfo);
-		//		}
-		//	}
-		//}
-
-		//public void WriteBodyToFile(BinaryWriter bw)
-		//{
-		//	bw.Write((UInt32)Status);
-		//	bw.Write(Quantity);
-		//	bw.Write(Id);
-		//	byte[] nameb = new byte[BYTES_NAME];
-		//	Encoding.Default.GetBytes(Name, 0, Name.Length.EqualOrLess(BYTES_NAME * 2), nameb, 0);
-		//	bw.Write(nameb);
-
-		//	byte[] descrb = new byte[BYTES_DESCR];
-		//	Encoding.Default.GetBytes(Descr, 0, Descr.Length.EqualOrLess(BYTES_DESCR * 2), descrb, 0);
-		//	bw.Write(descrb);
-		//	for (int i = 0; i < _logInfos.Capacity; i++)
-		//	{
-		//		bw.Write(LogInfo.EmptyLogInfo);
-		//	}
-		//	var nb = GetNullBytes();
-		//	if (nb > 0)
-		//	{
-		//		byte[] nullb = new byte[nb];
-		//		bw.Write(nullb);
-		//	}
-		//}
-
-		///// <summary>
-		///// Save loginfo to file and add it to folder.
-		///// </summary>
-		///// <param name="bw">Stream to write</param>
-		///// <param name="br">Stream to read(must be the same as write)</param>
-		///// <param name="logInfo">Loginfo to add</param>
-		///// <returns>FolderFullException if folder full.</returns>
-		//internal void WriteLogInfoToFile(BinaryWriter bw, BinaryReader br, LogInfo logInfo)
-		//{
-		//	br.BaseStream.Seek(this.FilePos + FolderInfo.BYTES_STATUS, SeekOrigin.Begin);
-		//	bw.Write(++this.Quantity);
-		//	br.BaseStream.Seek(this.FilePos + FolderInfo.BYTES_BODY, SeekOrigin.Begin);
-		//	while (br.ReadUInt16() != 0)
-		//	{
-		//		br.BaseStream.Seek(br.BaseStream.Position + LogInfo.BYTES_LOGINFO - LogInfo.BYTES_ID, SeekOrigin.Begin);
-		//	}
-		//	br.BaseStream.Seek(br.BaseStream.Position - LogInfo.BYTES_ID, SeekOrigin.Begin);
-		//	logInfo.WriteToFile(bw);
-		//	this._logInfos.Add(logInfo);
-		//}
-
-		//internal void RemoveLoginfo(BinaryWriter bw, UInt16 logInfoId)
-		//{
-		//	var li = this[logInfoId];
-		//	if (li == null) throw new FolderNotCachedException(this);
-		//	bw.BaseStream.Seek(li.FilePos, SeekOrigin.Begin);
-		//	bw.Write((UInt16)0);
-		//}
-		//#endregion //OUTPUT
-		//#endregion //IO
 
 		private UInt32 GetNullBytes()
 		{
 			return (((UInt32)this.Status / 2) - 1) * BYTES_BODY;
-		}
-
-		//public int IndexOf(LogInfo item)
-		//{
-		//	for (int i = 0; i < _logInfos.Length; i++)
-		//	{
-		//		if (item.Id == _logInfos[i].Id) return i;
-		//	}
-		//	return -1;
-		//}
+		} //redurant?
+		private static StatusEnum AllLengths => StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8;
+		internal long GetTotalByteLength() => BYTES_NULLFOLDER * SizeMultiplier;
 
 		//public void RemoveAt(int index)
 		//{
@@ -254,76 +167,13 @@ namespace DataModule.Models
 		//	Count--;
 		//	NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, rem, index));
 		//}
-		//public void Insert(int index, LogInfo item)
-		//{
-		//	if (IsFull) throw new FolderFullException(this);
-		//	if (index > Count) throw new IndexOutOfRangeException();
-		//	if (index >= Count / 2)
-		//	{
-		//		int i = Count;
-		//		while (i > index)
-		//		{
-		//			_logInfos[FakeToReal(i)] = _logInfos[FakeToReal(--i)];
-		//		}
-		//		_tail = (_tail + 1) % _capacity;
-		//	}
-		//	else
-		//	{
-		//		_head = (_head + _capacity - 1) % _capacity;
-		//		int i = 1;
-		//		while (i < index)
-		//		{
-		//			_logInfos[FakeToReal(i)] = _logInfos[FakeToReal(++i)];
-		//		}
-		//	}
-		//	_logInfos[FakeToReal(index)] = item;
-		//	Count++;
-		//	NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, item, index));
-		//}
-
-		//private int FakeToReal(int index) => (_head + index) % _capacity;
-
-		//public void Add(LogInfo item)
-		//{
-		//	((IList<LogInfo>)this).Insert(Count, item);
-		//}
-
-		//public bool Remove(LogInfo item)
-		//{
-		//	int index = IndexOf(item);
-		//	if (index == -1) return false;
-		//	((IList<LogInfo>)this).RemoveAt(IndexOf(item));
-		//	return true;
-		//}
-		//public void Clear()
-		//{
-		//	for (int i = 0; i < Count; i++)
-		//	{
-		//		_logInfos[FakeToReal(i)] = null;
-		//	}
-		//	_head = 0;
-		//	_tail = 0;
-		//	Count = 0;
-		//}
-
-
-		//public LogInfo this[int index]
-		//{
-		//	get => _logInfos[FakeToReal(index)];
-		//	set
-		//	{
-		//		var ri = FakeToReal(index);
-		//		var old = _logInfos[ri];
-		//		_logInfos[ri] = value;
-		//		NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Replace, value, old, index));
-		//	}
-		//}
 
 		internal bool Add(LogInfo value)
 		{
-			if (IsFull) return false;
-			_tail = (_tail + 1) % _logInfos.Length;
-			_logInfos[_tail] = value;
+			if (IsFull || !_cached) return false;
+			//_tail = (_tail + 1) % _logInfos.Length;
+			//_logInfos[_tail] = value;
+			_logInfos[_liMemCount++] = value;
 			_count++;
 			return true;
 		}
@@ -332,45 +182,71 @@ namespace DataModule.Models
 		{
 			get
 			{
-				if (index > _count) throw new IndexOutOfRangeException();
-				return _logInfos[(_head + index) % _logInfos.Length];
+				//if (!_cached) return null;
+				if (index > _liMemCount) throw new IndexOutOfRangeException();
+				return _logInfos[index];
+				//return _logInfos[(_head + index) % _logInfos.Length];
 			}
 		}
 
-		#region IEnumerable
-		IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_logInfos, _head, _tail);
+		internal void ClearCache()
+		{
+			Array.Clear(_logInfos, 0, _logInfos.Length);
+			_liMemCount = 0;
+			_cached = false;
+		}
+
+		internal LogInfo[] BeginCache()
+		{
+			if (!_cached) return _logInfos;
+			throw new FolderCachedException(this);
+		}
+
+		internal void EndCache(int count)
+		{
+			if (!_cached)
+			{
+				_liMemCount = count;
+				_count = (ushort)count;
+				_cached = true;
+			}
+			else throw new FolderCachedException(this);
+		}
+
+		#region IEnumerable interface
+		IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_logInfos, _liMemCount);
 		private class Enumerator : IEnumerator
 		{
 			private LogInfo[] _arr;
-			private int _head;
-			private int _tail;
+			private int _count;
+			//private int _head;
+			//private int _tail;
 			private int _pos;
-			internal Enumerator(LogInfo[] arr, int head, int tail)
+			internal Enumerator(LogInfo[] arr, int count)
 			{
 				_arr = arr;
-				_head = head;
-				_tail = tail;
+				_count = count;
 				_pos = -1;
 			}
-			object IEnumerator.Current => _arr[_pos];
+			object IEnumerator.Current => Current;
+			public LogInfo Current => _arr[_pos];
 			bool IEnumerator.MoveNext()
 			{
-				if (_pos == _tail) return false;
-				else if (_pos == -1) _pos = _head;
-				else _pos = (_pos + 1) % _arr.Length;
-				return true;
+				_pos++;
+				return (_pos < _count);
 			}
 			void IEnumerator.Reset()
 			{
 				_pos = -1;
 			}
+			//check which current will 'foreach' use
 		}
-		#endregion //IEnumerable
+		#endregion //IEnumerable interface
 
 		#region NOTIFS
 		public event NotifyCollectionChangedEventHandler CollectionChanged;
 		public event PropertyChangedEventHandler PropertyChanged;
-		private void NotifyPropertyChanged([CallerMemberName] String propertyName = "")
+		private void NotifyPropertyChanged([CallerMemberName] string propertyName = "")
 		{
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}

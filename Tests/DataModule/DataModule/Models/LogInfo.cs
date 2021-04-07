@@ -49,6 +49,18 @@ namespace DataModule.Models
 			CLogin = clogin;
 			CPass = cpass;
 		}
+
+		public LogInfo(long filepos,ushort id, LogInfoAttributes attributes, string name, string descr, DateTime date, byte[] clogin, byte[] cpass)
+		{
+			FilePos = filepos;
+			Id = id;
+			Attributes = attributes;
+			Name = name;
+			Descr = descr;
+			Date = date;
+			CLogin = clogin;
+			CPass = cpass;
+		}
 	}
 
 	public enum LogInfoAttributes : UInt32
