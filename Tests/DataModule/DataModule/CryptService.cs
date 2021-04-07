@@ -11,13 +11,20 @@ namespace DataModule
 	internal class CryptService : IDisposable
 	{
 		private FileStream _DFS;
-		private MemoryStream _mem;
+		//private MemoryStream _mem;
+		private readonly Memory<byte> _buffer;
+		private int _pos;
+		private int _count;
+
 		private readonly Memory<byte> _bufferSmallConverting;
 		private readonly Memory<byte> _bufferRead;
 
 		internal CryptService(FileInfo fileInfo, int maxCryptBlock)
 		{
-			_mem = new MemoryStream(new byte[maxCryptBlock]);
+			_buffer = new Memory<byte>(new byte[maxCryptBlock]);
+			_pos = 0;
+			_count = 0;
+			//_mem = new MemoryStream(new byte[maxCryptBlock]);
 			if (!fileInfo.Exists)
 			{
 				_DFS = new FileStream(fileInfo.FullName, FileMode.CreateNew, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.RandomAccess);
@@ -49,7 +56,10 @@ namespace DataModule
 		internal void Write(Span<byte> value)
 		{
 			CryptInternal(value);
-			_mem.Write(value);
+			value.CopyTo(_buffer.Span.Slice(_pos));
+			_pos += value.Length;
+			_count += value.Length;
+			//_mem.Write(value);
 		}
 
 		internal unsafe void Write(UInt16 value)
@@ -87,12 +97,14 @@ namespace DataModule
 
 		internal void FlushToFile()
 		{
-			_mem.WriteTo(_DFS);
+			_DFS.Write(_buffer.Span.Slice(0,_count));
+			//_mem.WriteTo(_DFS);
 			_DFS.Flush(true);
-			_mem.Position = 0;
+			_pos = 0;
+			_count = 0;
 		}
 
-		internal unsafe UInt16 ReadUInt16Core()
+		internal unsafe UInt16 ReadUInt16()
 		{
 			var t = ReadBytes(2);
 			fixed (byte* bp = t)
@@ -100,7 +112,7 @@ namespace DataModule
 				return *(UInt16*)bp;
 			}
 		}
-		internal unsafe int ReadInt32Core()
+		internal unsafe int ReadInt32()
 		{
 			var t = ReadBytes(4);
 			fixed (byte* bp = t)
@@ -108,7 +120,7 @@ namespace DataModule
 				return *(Int32*)bp;
 			}
 		}
-		internal unsafe UInt32 ReadUInt32Core()
+		internal unsafe UInt32 ReadUInt32()
 		{
 			var t = ReadBytes(4);
 			fixed (byte* bp = t)
@@ -116,7 +128,7 @@ namespace DataModule
 				return *(UInt32*)bp;
 			}
 		}
-		internal unsafe DateTime ReadDateTimeCore()
+		internal unsafe DateTime ReadDateTime()
 		{
 			var t = ReadBytes(8);
 			fixed (byte* bp = t)
@@ -165,7 +177,7 @@ namespace DataModule
 
 		public void Dispose()
 		{
-			((IDisposable)_mem).Dispose();
+			//((IDisposable)_mem).Dispose();
 			((IDisposable)_DFS).Dispose();
 		}
 	}
