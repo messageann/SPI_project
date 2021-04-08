@@ -13,6 +13,29 @@
         Title="{Binding Title}"
 		>
     <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="2*"/>
+            <RowDefinition Height="29*"/>
+        </Grid.RowDefinitions>
 
+        <Grid Grid.Row="0" Width="915" Margin="0,0,15,0">
+            <Button Content="х" HorizontalAlignment="Left" Height="18" Margin="897,11,0,11" VerticalAlignment="Top" Width="18"/>
+            <Button Content="_" HorizontalAlignment="Left" Height="18" Margin="864,11,33,11" VerticalAlignment="Center" Width="18"/>
+            <Grid>
+                <Rectangle HorizontalAlignment="Left" Height="40" Margin="0,0,810,0" VerticalAlignment="Top" Width="40" Fill="#363636" Visibility="Visible"/>
+                <Border HorizontalAlignment="Left" Height="40" Margin="0,0,0,0" VerticalAlignment="Top" Width="850" Background="#363636" CornerRadius="15">
+                    <Border.Effect>
+                        <DropShadowEffect BlurRadius="4" Opacity="0.25" Direction="300" ShadowDepth="7"/>
+                    </Border.Effect>
+                </Border>
+            </Grid>
+        </Grid>
+
+        <Grid Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26*"/>
+                <ColumnDefinition Width="67*"/>
+            </Grid.ColumnDefinitions>
+        </Grid>
     </Grid>
 </Window>
