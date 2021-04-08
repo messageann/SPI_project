@@ -10,4 +10,10 @@
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="6.0.0-preview.2.21154.6" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Reference Include="WPFCoreEx">
+      <HintPath>Dlls\WPFCoreEx.dll</HintPath>
+    </Reference>
+  </ItemGroup>
+
 </Project>
