@@ -36,7 +36,8 @@ namespace DataModule
 			fixed (char* pch = value)
 			fixed (byte* pb = _bufferCharEncoding)
 			{
-				_enc.Convert(pch, value.Length, pb, byteCount, true, out _, out _, out _);
+				_enc.Convert(value, _bufferCharEncoding, true, out var _, out var bused, out _);
+				Array.Clear(_bufferCharEncoding, bused, byteCount - bused); //find optimal
 				return new Span<byte>(pb, byteCount);
 			}
 		}

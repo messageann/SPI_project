@@ -135,7 +135,7 @@ namespace DataModule.Models
 
 		internal int GetExtraNullFoldersCount()
 		{
-			return (SizeMultiplier - 1);
+			return SizeMultiplier - 1;
 		}
 		private static StatusEnum AllLengths => StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8;
 		internal int GetTotalByteLength() => BYTES_NULLFOLDER * SizeMultiplier;
