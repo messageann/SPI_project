@@ -20,6 +20,7 @@ namespace DataModule
 			{
 				ds.Init();
 				ds.RegLogInfo(ds.Folders[1], "google acc1", "old account, almost empty", "myaccount_old@gmail.com", "qwe123rty", new CryptMethod("key1"));
+				ds.RegFolderInfo(StatusEnum.X4, "big big x4 boy", "LOOONG");
 			}
 			using (var ds = new DataService(p))
 			{
