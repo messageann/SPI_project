@@ -22,20 +22,29 @@
 
         <Grid Grid.Row="0" Width="915" Margin="0,0,15,0">
             <Rectangle HorizontalAlignment="Left" Height="50" VerticalAlignment="Top" Width="260" Fill="#242424" Visibility="Visible"/>
-            <exc:ButtonEx ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Left" Height="18" Margin="897,11,0,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0"/>
-            <exc:ButtonEx ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Left" Height="18" Margin="864,11,33,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0"/>
+            <exc:ButtonEx ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Right" Height="18" Margin="897,11,0,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0">
+                <Image Source ="{StaticResource cross}"/>
+            </exc:ButtonEx>
+            <exc:ButtonEx ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Right" Height="18" Margin="864,11,33,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0">
+                <Image Source ="{StaticResource minus}" Margin="0,15,0,0"/>
+            </exc:ButtonEx>
             <Grid Height="50">
-                <Ellipse HorizontalAlignment="Left" Height="26" Margin="21,7,0,0" VerticalAlignment="Top" Width="26" Fill="#773079" Panel.ZIndex="2"/>
+                <Ellipse HorizontalAlignment="Left" Height="26" Margin="21,7,0,0" VerticalAlignment="Top" Width="26" Panel.ZIndex="2" Fill="#773079"/>
+                <Ellipse HorizontalAlignment="Left" Height="22" Margin="23,11,0,0" VerticalAlignment="Top" Width="22" Panel.ZIndex="2">
+                    <Ellipse.Fill>
+                        <ImageBrush ImageSource="{StaticResource user}" Stretch="Fill"/>
+                    </Ellipse.Fill>
+                </Ellipse>
                 <Rectangle HorizontalAlignment="Left" Height="40" Margin="0,0,810,0" VerticalAlignment="Top" Width="40" Fill="#363636" Visibility="Visible" Panel.ZIndex="1"/>
                 <Border HorizontalAlignment="Left" Height="40" Margin="0,0,0,0" VerticalAlignment="Top" Width="850" Background="#363636" CornerRadius="15">
                     <Border.Effect>
                         <DropShadowEffect BlurRadius="4" Opacity="0.25" Direction="300" ShadowDepth="7"/>
                     </Border.Effect>
                 </Border>
-                <exc:ButtonEx Content="Account" HorizontalAlignment="Left" Height="20" Margin="59,10,0,0" VerticalAlignment="Top" Width="52" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity" Click="ButtonEx_Click"/>
-                <exc:ButtonEx Content="Menu" HorizontalAlignment="Left" Height="20" Margin="130,9,0,0" VerticalAlignment="Top" Width="36" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
-                <exc:ButtonEx Content="Settings" HorizontalAlignment="Left" Height="20" Margin="182,9,0,0" VerticalAlignment="Top" Width="56" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
-                <TextBox HorizontalAlignment="Left" Height="22" Margin="549,9,85,9" TextWrapping="Wrap" VerticalAlignment="Top" Width="281" Foreground="#858585" Background="#545454" BorderThickness="0,0,0,0" Padding="2, 2" ex:Appearance.CornerRadius="10" ex:Appearance.HintText="Search.." />
+                <exc:ButtonEx Content="Account" HorizontalAlignment="Left" Height="20" Margin="59,10,0,0" VerticalAlignment="Top" Width="52" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
+                <exc:ButtonEx Content="Menu" HorizontalAlignment="Left" Height="20" Margin="129,10,0,0" VerticalAlignment="Top" Width="36" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
+                <exc:ButtonEx Content="Settings" HorizontalAlignment="Left" Height="20" Margin="182,10,0,0" VerticalAlignment="Top" Width="56" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
+                <TextBox HorizontalAlignment="Right" Height="22" Margin="549,9,85,9" TextWrapping="Wrap" VerticalAlignment="Top" Width="281" Foreground="#858585" Background="#545454" BorderThickness="0,0,0,0" ex:Appearance.CornerRadius="10" ex:Appearance.HintText="Search..." Padding="12, 2, 0 ,2"/>
 
             </Grid>
         </Grid>
@@ -46,10 +55,27 @@
                 <ColumnDefinition Width="67*"/>
             </Grid.ColumnDefinitions>
             <Grid Grid.Column="0" Background="#242424">
+                <Image Source ="{StaticResource folder}" Margin="124,13,116,538" Width="20" Height="20"/>
                 <Label Content="Folders" HorizontalAlignment="Left" VerticalAlignment="Top" FontFamily="Akzidenz-Grotesk Pro Med Cnd" FontWeight="Bold" FontSize="26" Foreground="#FFFFFF" Margin="15,0,0,0" />
+                <exc:ButtonEx HorizontalAlignment="Left" Height="22" Margin="179,12,0,0" VerticalAlignment="Top" Width="61" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#DADADA" Background="#545454" ex:Appearance.CornerRadius="10">
+                    <StackPanel Orientation="Horizontal">
+                        <TextBlock VerticalAlignment="Center" Width="29"><Run Text="Add" Foreground="#DADADA"/></TextBlock>
+                        <Image Width="12" Height="12" Source="{StaticResource plus}"/>
+                    </StackPanel>
+                </exc:ButtonEx>
+                <ListView HorizontalAlignment="Center" Height="525" Margin="0,46,0,0" VerticalAlignment="Bottom" Width="220" BorderThickness="0,0,0,0" SelectionChanged="ListView_SelectionChanged">
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid>
+
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
             </Grid>
+            
             <Grid Grid.Column="1" Background="#363636">
-                <Label Content="Choose a folder" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Akzidenz-Grotesk Pro Med Cnd" FontWeight="Bold" FontSize="36" Foreground="#242424" />
+                <Label Content="Choose a folder" HorizontalAlignment="Center" VerticalAlignment="Center" FontFamily="Akzidenz-Grotesk Pro Med Cnd" FontWeight="Bold" FontSize="36" Foreground="#242424"/>
             </Grid>
         </Grid>
     </Grid>
