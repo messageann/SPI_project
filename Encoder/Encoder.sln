@@ -5,7 +5,7 @@ VisualStudioVersion = 16.0.31019.35
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "DataModule", "DataModule\DataModule.csproj", "{2E3338CC-94D7-444B-8297-BE38025AD230}"
 EndProject
-Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI", "EncoderUI\UI.csproj", "{231717C7-E76C-4A92-A09A-9C9E3D89A566}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "UI", "UI\UI.csproj", "{231717C7-E76C-4A92-A09A-9C9E3D89A566}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
