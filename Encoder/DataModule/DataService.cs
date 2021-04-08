@@ -121,6 +121,11 @@ namespace DataModule
 				_cryptService.Write(LogInfo.EmptyLogInfo); //this is slow, mb worth to try write big array instead of few smalls?
 				_cryptService.FlushToFile();
 			}
+			var nulls = fi.GetExtraNullFoldersCount();
+			for (i = 0; i < nulls; i++)
+			{
+				_cryptService.WriteThrough(FolderInfo.NullBody);
+			}
 		}
 		private void WriteLogInfo(LogInfo li)
 		{
@@ -147,6 +152,39 @@ namespace DataModule
 			WriteLogInfo(li);
 			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_STATUS);
 			_cryptService.Write((UInt16)(fi.Count + 1));
+			_cryptService.FlushToFile();
+		}
+
+		//find pos and delete
+		private void DeleteFolderInfo(FolderInfo fi, bool forceZeroMem = false)
+		{
+			_cryptService.Seek(fi.FilePos);
+			if (forceZeroMem) //zero all folder
+			{
+				var totalzise = fi.GetTotalByteLength();
+				Span<byte> buff = stackalloc byte[totalzise];
+				_cryptService.WriteThrough(buff);
+			}
+			else //make status to NULL-folder
+			{
+				_cryptService.Write((UInt32)(fi.Status | StatusEnum.NULL));
+				_cryptService.FlushToFile();
+			}
+		}
+		private void DeleteLogInfo(FolderInfo fi, LogInfo li, bool forceZeroMem = false)
+		{
+			_cryptService.Seek(li.FilePos);
+			if (forceZeroMem)
+			{
+				_cryptService.WriteThrough(LogInfo.EmptyLogInfo);
+			}
+			else
+			{
+				_cryptService.Write((UInt16)0);
+				_cryptService.FlushToFile();
+			}
+			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_STATUS);
+			_cryptService.Write((UInt16)(fi.Count - 1));
 			_cryptService.FlushToFile();
 		}
 
@@ -221,6 +259,26 @@ namespace DataModule
 			fi.EndCache(found);
 		}
 		#endregion //DATA GET
+
+		#region DATA EDIT
+		public void RemoveFolderInfo(int index, bool forceZeroMem = false)
+		{
+			var fi = _folders[index]; //get folder
+			DeleteFolderInfo(fi, forceZeroMem); //remove folder from file
+			_folders.RemoveAt(index); //remove folder from mem
+			for (int i = 0; i < fi.SizeMultiplier; i++)
+			{
+				_emptyFolderPoses.Enqueue(fi.FilePos + (i * FolderInfo.BYTES_NULLFOLDER));
+			} //add pos to empty folders
+			UpdateBody(); //update body(folders count, empty folders count)
+		}
+		public void RemoveLogInfo(FolderInfo fi, int index, bool forceZeroMem = false)
+		{
+			var li = fi[index]; //get item
+			DeleteLogInfo(fi, li, forceZeroMem); //remove loginfo from file and update folderinfo count prop
+			fi.RemoveAt(index); //remove loginfo from mem
+		}
+		#endregion //DATA EDIT
 
 		public void Dispose()
 		{
