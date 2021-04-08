@@ -15,12 +15,13 @@ namespace DataModule
 				ds.Init();
 				ds.RegFolderInfo(StatusEnum.X2, "x2 big boy", "big boy descr");
 				ds.RegFolderInfo(StatusEnum.Normal, "folder one", "normal length folder 1st");
+				ds.RegFolderInfo(StatusEnum.X4, "big big x4 boy", "LOOONG");
 			}
 			using (var ds = new DataService(p))
 			{
 				ds.Init();
+				ds.RemoveFolderInfo(0, true);
 				ds.RegLogInfo(ds.Folders[1], "google acc1", "old account, almost empty", "myaccount_old@gmail.com", "qwe123rty", new CryptMethod("key1"));
-				ds.RegFolderInfo(StatusEnum.X4, "big big x4 boy", "LOOONG");
 			}
 			using (var ds = new DataService(p))
 			{
