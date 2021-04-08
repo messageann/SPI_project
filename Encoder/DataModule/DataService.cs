@@ -68,7 +68,7 @@ namespace DataModule
 			{
 				preFolderPos = _cryptService.Position;
 				status = (StatusEnum)_cryptService.ReadUInt32();
-				if ((status & StatusEnum.NULL) != 0) //null folder
+				if ((status & StatusEnum.NULL) != 0 || status == 0) //null folder
 				{
 					_emptyFolderPoses.Enqueue(preFolderPos);
 					_cryptService.Seek(preFolderPos + FolderInfo.BYTES_NULLFOLDER);
