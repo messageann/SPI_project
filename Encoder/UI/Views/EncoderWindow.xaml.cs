@@ -26,5 +26,10 @@ namespace EncoderUI.Views
         {
 
         }
+
+        private void ButtonEx_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 }

@@ -1,4 +1,10 @@
 ﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
                     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-	
+    <DrawingImage x:Key="cross">
+        <DrawingImage.Drawing>
+            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+                <GeometryDrawing Brush="#858585" Geometry="F1 M24,24z M0,0z M23.707,0.293L23.707,0.293A1,1,0,0,0,22.293,0.293L12,10.586 1.707,0.293A1,1,0,0,0,0.293,0.293L0.293,0.293A1,1,0,0,0,0.293,1.707L10.586,12 0.293,22.293A1,1,0,0,0,0.293,23.707L0.293,23.707A1,1,0,0,0,1.707,23.707L12,13.414 22.293,23.707A1,1,0,0,0,23.707,23.707L23.707,23.707A1,1,0,0,0,23.707,22.293L13.414,12 23.707,1.707A1,1,0,0,0,23.707,0.293z" />
+            </DrawingGroup>
+        </DrawingImage.Drawing>
+    </DrawingImage>
 </ResourceDictionary>

@@ -22,8 +22,8 @@
 
         <Grid Grid.Row="0" Width="915" Margin="0,0,15,0">
             <Rectangle HorizontalAlignment="Left" Height="50" VerticalAlignment="Top" Width="260" Fill="#242424" Visibility="Visible"/>
-            <Button Content="х" HorizontalAlignment="Left" Height="18" Margin="897,11,0,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0"/>
-            <Button Content="_" HorizontalAlignment="Left" Height="18" Margin="864,11,33,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0" ClipToBounds="True"/>
+            <exc:ButtonEx ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Left" Height="18" Margin="897,11,0,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0"/>
+            <exc:ButtonEx ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Left" Height="18" Margin="864,11,33,11" VerticalAlignment="Top" Width="18" BorderThickness="0,0,0,0"/>
             <Grid Height="50">
                 <Ellipse HorizontalAlignment="Left" Height="26" Margin="21,7,0,0" VerticalAlignment="Top" Width="26" Fill="#773079" Panel.ZIndex="2"/>
                 <Rectangle HorizontalAlignment="Left" Height="40" Margin="0,0,810,0" VerticalAlignment="Top" Width="40" Fill="#363636" Visibility="Visible" Panel.ZIndex="1"/>
@@ -32,10 +32,10 @@
                         <DropShadowEffect BlurRadius="4" Opacity="0.25" Direction="300" ShadowDepth="7"/>
                     </Border.Effect>
                 </Border>
-                <exc:ButtonEx Content="Account" HorizontalAlignment="Left" Height="20" Margin="59,11,0,0" VerticalAlignment="Top" Width="52" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
-				<exc:ButtonEx Content="Menu" HorizontalAlignment="Left" Height="20" Margin="130,10,0,0" VerticalAlignment="Top" Width="36" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
-				<exc:ButtonEx Content="Settings" HorizontalAlignment="Left" Height="20" Margin="182,10,0,0" VerticalAlignment="Top" Width="56" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
-                <TextBox HorizontalAlignment="Left" Height="22" Margin="549,9,85,9" TextWrapping="Wrap" VerticalAlignment="Top" Width="281" Foreground="#858585" Background="#545454" BorderThickness="0,0,0,0" Padding="2, 2" ex:Appearance.CornerRadius="10" ex:Appearance.HintText="Search.."/>
+                <exc:ButtonEx Content="Account" HorizontalAlignment="Left" Height="20" Margin="59,10,0,0" VerticalAlignment="Top" Width="52" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity" Click="ButtonEx_Click"/>
+                <exc:ButtonEx Content="Menu" HorizontalAlignment="Left" Height="20" Margin="130,9,0,0" VerticalAlignment="Top" Width="36" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
+                <exc:ButtonEx Content="Settings" HorizontalAlignment="Left" Height="20" Margin="182,9,0,0" VerticalAlignment="Top" Width="56" FontFamily="Akzidenz-Grotesk Pro" BorderThickness="0,0,0,0" Foreground="#858585" ButtonBehavior="ImageWithOpacity"/>
+                <TextBox HorizontalAlignment="Left" Height="22" Margin="549,9,85,9" TextWrapping="Wrap" VerticalAlignment="Top" Width="281" Foreground="#858585" Background="#545454" BorderThickness="0,0,0,0" Padding="2, 2" ex:Appearance.CornerRadius="10" ex:Appearance.HintText="Search.." />
 
             </Grid>
         </Grid>
