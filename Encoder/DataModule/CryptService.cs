@@ -53,6 +53,13 @@ namespace DataModule
 			//implement
 		}
 
+		internal void WriteThrough(Span<byte> value)
+		{
+			CryptInternal(value);
+			_DFS.Write(value);
+			_DFS.Flush(true);
+		}
+
 		internal void Write(Span<byte> value)
 		{
 			CryptInternal(value);

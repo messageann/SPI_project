@@ -106,7 +106,7 @@ namespace DataModule.Models
 			_id = id;
 			Name = name;
 			Description = descr;
-			SizeMultiplier = (int)(status & StatusEnum.X8) / 2;
+			SizeMultiplier = (int)(status & (StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8)) / 2;
 
 			_logInfos = new LogInfo[((int)status / 2 * DEFAULT_QUANTITY)];
 			_liMemCount = 0;
@@ -133,40 +133,12 @@ namespace DataModule.Models
 		}
 		#endregion //CONSTRUCTORS
 
-		private UInt32 GetNullBytes()
+		internal int GetExtraNullFoldersCount()
 		{
-			return (((UInt32)this.Status / 2) - 1) * BYTES_BODY;
-		} //redurant?
+			return (SizeMultiplier - 1);
+		}
 		private static StatusEnum AllLengths => StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8;
-		internal long GetTotalByteLength() => BYTES_NULLFOLDER * SizeMultiplier;
-
-		//public void RemoveAt(int index)
-		//{
-		//	if (index >= Count) throw new IndexOutOfRangeException();
-		//	int r = FakeToReal(index);
-		//	LogInfo rem = _logInfos[r];
-		//	if (index >= Count / 2)
-		//	{
-		//		int fakeI = index;
-		//		while (fakeI < Count - 1)
-		//		{
-		//			_logInfos[FakeToReal(fakeI)] = _logInfos[FakeToReal(++fakeI)];
-		//		}
-		//		_tail = (_tail + _capacity - 1) % _capacity;
-		//	}
-		//	else
-		//	{
-		//		int fakeI = index;
-		//		while (fakeI > 0)
-		//		{
-		//			_logInfos[FakeToReal(fakeI)] = _logInfos[FakeToReal(--fakeI)];
-		//		}
-		//		_head = (_head + 1) % _capacity;
-		//	}
-
-		//	Count--;
-		//	NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, rem, index));
-		//}
+		internal int GetTotalByteLength() => BYTES_NULLFOLDER * SizeMultiplier;
 
 		internal bool Add(LogInfo value)
 		{
@@ -179,12 +151,26 @@ namespace DataModule.Models
 			return true;
 		}
 
+		internal void RemoveAt(int index)
+		{
+			var it = _logInfos[index];
+			if (index >= _liMemCount) throw new IndexOutOfRangeException();
+			_liMemCount--;
+			if (index < _liMemCount)
+			{
+				Array.Copy(_logInfos, index + 1, _logInfos, index, _liMemCount - index);
+			}
+			_logInfos[_liMemCount] = null;
+			_count--;
+			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, it, index));
+		}
+
 		public LogInfo this[int index]
 		{
 			get
 			{
 				//if (!_cached) return null;
-				if (index > _liMemCount) throw new IndexOutOfRangeException();
+				if (index >= _liMemCount) throw new IndexOutOfRangeException();
 				return _logInfos[index];
 				//return _logInfos[(_head + index) % _logInfos.Length];
 			}
@@ -211,7 +197,7 @@ namespace DataModule.Models
 				_liMemCount = count;
 				_count = (ushort)count;
 				_cached = true;
-				foreach(var t in this)
+				foreach (var t in this)
 				{
 					NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, t));
 				}
@@ -267,10 +253,11 @@ namespace DataModule.Models
 		{
 			NullBody[0] = 1;
 		}
-		private static readonly byte[] NullBody = new byte[BYTES_BODY];
+		internal static readonly byte[] NullBody = new byte[BYTES_BODY];
 		#endregion //STATIC
 	}
 
+	[Flags]//redurant?
 	public enum StatusEnum : UInt32
 	{
 		NULL = 1U << 0,
