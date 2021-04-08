@@ -5,15 +5,14 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:EncoderUI.Views"
         mc:Ignorable="d"
-		AllowsTransparency="True"
 		WindowStyle="None"
-		Background="Black"
-		Height="450" Width="800"
-		ResizeMode="CanResizeWithGrip"
+		Background="#363636"
+		Height="620" Width="930"
+		ResizeMode="CanResize"
 		DataContext="{Binding Source={StaticResource ViewModelsController}, Path=EncoderWindowVM}"
         Title="{Binding Title}"
 		>
-	<Grid>
+    <Grid>
 
-	</Grid>
+    </Grid>
 </Window>
