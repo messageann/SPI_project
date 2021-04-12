@@ -147,7 +147,7 @@ namespace DataModule.Models
 			//_logInfos[_tail] = value;
 			_logInfos[_liMemCount++] = value;
 			_count++;
-			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value));
+			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value, _liMemCount-1));
 			return true;
 		}
 
