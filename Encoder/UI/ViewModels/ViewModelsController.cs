@@ -1,7 +1,8 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
+using DataModule;
 
-namespace EncoderUI.ViewModels
+namespace UI.ViewModels
 {
 	public class ViewModelsController
 	{
@@ -14,6 +15,7 @@ namespace EncoderUI.ViewModels
 			var services = new ServiceCollection();
 
 			services.AddSingleton<EncoderWindowVM>();
+			//services.AddSingleton<DataService>();
 
 			_provider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateOnBuild = true, ValidateScopes = true });
 			return true;

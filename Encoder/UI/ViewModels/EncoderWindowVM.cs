@@ -3,8 +3,10 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Windows;
+using WPFCoreEx.Bases;
 
-namespace EncoderUI.ViewModels
+namespace UI.ViewModels
 {
 	public class EncoderWindowVM : INotifyPropertyChanged
 	{
