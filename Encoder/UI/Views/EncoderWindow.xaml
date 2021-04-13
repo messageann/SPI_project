@@ -29,14 +29,12 @@
 
         <DockPanel x:Name="Header" Grid.Row="0" LastChildFill="True" Panel.ZIndex="1">
             <exc:ButtonEx x:Name="CloseBtn" ButtonBehavior="ImageWithOpacity" Height="40" Width="40" DockPanel.Dock="Right"
-						  Background="Transparent" BackgroundMouseOver="#FF4C4C51" BackgroundClick="#FF683636"
-						  >
+						  Background="Transparent" BackgroundMouseOver="#FF4C4C51" BackgroundClick="#FF683636">
                 <Image Source ="{StaticResource cross}" Width="20" Height="20"/>
             </exc:ButtonEx>
             <exc:ButtonEx x:Name="MinimizeBtn" ButtonBehavior="ImageWithOpacity" Height="40" Width="40" DockPanel.Dock="Right"
-						  Background="Transparent" BackgroundMouseOver="#FF4C4C51" BackgroundClick="#FF424261"
-						  >
-                <Image Source ="{StaticResource minus}" Width="20" Height="20"/>
+						  Background="Transparent" BackgroundMouseOver="#FF4C4C51" BackgroundClick="#FF424261"  >
+                <Image Source ="{StaticResource minus}" Width="20" Height="20" Margin="0,10,0,0"/>
             </exc:ButtonEx>
             <Border CornerRadius="0,15,15,0" Background="{StaticResource DefaultBackground}" Margin="0,0,10,0">
                 <b:Interaction.Behaviors>
@@ -71,24 +69,73 @@
                 <ColumnDefinition Width="26*"/>
                 <ColumnDefinition Width="67*"/>
             </Grid.ColumnDefinitions>
-            <Grid Grid.Column="0" Background="{StaticResource FolderBackground}">
-                <Image Source ="{StaticResource folder}" Margin="124,13,116,538" Width="20" Height="20"/>
-                <Label Content="Folders" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="Bold" FontSize="26" Foreground="#FFFFFF" Margin="15,0,0,0" />
-                <exc:ButtonEx HorizontalAlignment="Left" Height="22" Margin="179,12,0,0" VerticalAlignment="Top" Width="61" BorderThickness="0,0,0,0" Foreground="#DADADA" Background="#545454" ex:Appearance.CornerRadius="10">
+            <Grid Grid.Column="0" Background="{StaticResource FolderBackground}" Margin="0,0,0,0">
+                <Image Source ="{StaticResource folder}" Margin="124,17,116,543" Width="20" Height="20"/>
+                <Label Content="Folders" HorizontalAlignment="Left" VerticalAlignment="Top" FontWeight="Bold" FontSize="26" Foreground="{StaticResource DefaultWhite}" Margin="15,4,0,0" />
+                <exc:ButtonEx HorizontalAlignment="Left" Height="22" Margin="179,15,0,0" VerticalAlignment="Top" Width="61" BorderThickness="0,0,0,0" Foreground="#DADADA" Background="#545454" ex:Appearance.CornerRadius="10">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock VerticalAlignment="Center" Width="29"><Run Text="Add" Foreground="#DADADA"/></TextBlock>
+                        <TextBlock VerticalAlignment="Center" Width="29"><Run Text="Add" Foreground="{StaticResource SelectedFolder}"/></TextBlock>
                         <Image Width="12" Height="12" Source="{StaticResource plus}"/>
                     </StackPanel>
                 </exc:ButtonEx>
-                <ListView HorizontalAlignment="Center" Height="525" Margin="0,46,0,0" VerticalAlignment="Bottom" Width="220" BorderThickness="0,0,0,0">
+                <ListView HorizontalAlignment="Center" Height="533" Margin="0,47,0,0" VerticalAlignment="Top" Width="230" BorderThickness="0,0,0,0" Background="{StaticResource FolderBackground}">
                     <ListView.ItemTemplate>
                         <DataTemplate>
-                            <Grid>
-
+                            <Grid Width="230" Height="90" Margin="15,46,15,436" Visibility="Hidden">
+                                <Border Height="80" Margin="5,0,5,10" Width="220" Background="{StaticResource DefaultBackground}" CornerRadius="15" Visibility="Visible" Panel.ZIndex="1" >
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="5" Opacity="0.25" Direction="310" ShadowDepth="5"/>
+                                    </Border.Effect>
+                                    <Grid Margin="0,2,0,-2">
+                                        <TextBlock Background="{x:Null}" FontSize="18" FontWeight="Medium" Foreground="{StaticResource DefaultWhite}" Text="Name of folder" Margin="20,10,20,47"/>
+                                        <TextBlock Background="{x:Null}" FontSize="14" FontWeight="Regular" Foreground="{StaticResource DefaultWhite}" Text="0" Margin="41,47,149,16"/>
+                                        <Ellipse HorizontalAlignment="Left" Height="26" Margin="174,43,0,0" VerticalAlignment="Top" Width="26" Panel.ZIndex="2" Fill="#545454"/>
+                                        <Rectangle HorizontalAlignment="Right" Height="16" Margin="0,48,25,0" VerticalAlignment="Top" Width="16" Panel.ZIndex="2">
+                                            <Rectangle.Fill>
+                                                <ImageBrush ImageSource="{StaticResource lock}" Stretch="Uniform"/>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                        <Rectangle HorizontalAlignment="Left" Height="16" Margin="20,48,0,15" Width="16">
+                                            <Rectangle.Fill>
+                                                <ImageBrush ImageSource="{StaticResource clip}" Stretch="Uniform"/>
+                                            </Rectangle.Fill>
+                                        </Rectangle>
+                                    </Grid>
+                                </Border>
+                                <Border Height="80" Margin="5,0,5,10" Width="220" Background="{StaticResource DefaultPurple}" CornerRadius="15"/>
                             </Grid>
                         </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
+
+                <Grid Width="230" Height="90" Margin="15,46,15,436" Visibility="Hidden">
+                    <Border Height="80" Width="213" Margin="12,0,5,10" Background="{StaticResource SelectedFolder}" CornerRadius="15" Panel.ZIndex="1" >
+                        <Border.Effect>
+                            <DropShadowEffect BlurRadius="5" Opacity="0.25" Direction="310" ShadowDepth="5"/>
+                        </Border.Effect>
+                        <Grid Margin="0,2,0,-2">
+                            <TextBlock Background="{x:Null}" FontSize="18" FontWeight="Medium" Foreground="{StaticResource FolderBackground}" Text="Name of folder" Margin="20,10,20,47"/>
+                            <TextBlock Background="{x:Null}" FontSize="14" FontWeight="Regular" Foreground="{StaticResource DefaultPurple}" Text="0" Margin="42,47,148,16"/>
+                            <Grid>
+                                <TextBox Height="26" Margin="68,43,20,11" Background="{StaticResource DefaultPurple}" ex:Appearance.CornerRadius="13" BorderThickness="0,0,0,0"/>
+                                <Rectangle HorizontalAlignment="Right" Height="16" Margin="0,48,123,0" VerticalAlignment="Top" Width="16" Panel.ZIndex="2">
+                                    <Rectangle.Fill>
+                                        <ImageBrush ImageSource="{StaticResource lock_white}" Stretch="Uniform"/>
+                                    </Rectangle.Fill>
+                                </Rectangle>
+                                <Ellipse Width="16" Height="16" Stroke="White" Margin="170,48,27,16"/>
+                                <Image Source="{StaticResource angle_right}" Margin="170,44,27,12"/>
+                            </Grid>
+                            <Rectangle HorizontalAlignment="Left" Height="16" Margin="20,48,0,16" Width="16">
+                                <Rectangle.Fill>
+                                    <ImageBrush ImageSource="{StaticResource clip_purple}" Stretch="Uniform"/>
+                                </Rectangle.Fill>
+                            </Rectangle>
+                        </Grid>
+                    </Border>
+                    <Border Height="80" Margin="5,0,5,10" Width="220" Background="{StaticResource DefaultPurple}" CornerRadius="15"/>
+                </Grid>
+
             </Grid>
 
             <Grid Grid.Column="1" Background="#363636">
