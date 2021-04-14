@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Text;
-using System.Threading.Tasks;
 using DataModule.Exceptions;
 using DataModule.Models;
 
@@ -33,20 +32,24 @@ namespace DataModule
 		#region APP FIELDS
 		private readonly FileInfo _dataFile;
 
-		private readonly List<FolderInfo> _folders;
+		//private readonly List<FolderInfo> _folders;
+		private readonly ObservableCollection<FolderInfo> _folders;
 		private readonly Queue<long> _emptyFolderPoses;
 
 		private readonly EncodingService _encService;
 		private readonly CryptService _cryptService;
 		#endregion APP FIELDS
 
-		public ReadOnlyCollection<FolderInfo> Folders => _folders.AsReadOnly();
+		public ReadOnlyObservableCollection<FolderInfo> Folders => new(_folders);
 
 		public DataService(string dataPath)
 		{
 			_dataFile = new FileInfo(dataPath);
 			_emptyFolderPoses = new Queue<long>(DEFAULT_FOLDERS_COUNT);
-			_folders = new List<FolderInfo>(DEFAULT_FOLDERS_COUNT);
+			//_folders = new List<FolderInfo>(DEFAULT_FOLDERS_COUNT);
+			_folders = new();
+			_folders.Add(new(StatusEnum.Normal, 2, 2, "Name1", "Descr1")); //DEBUG
+			//_folders.Add(new(StatusEnum.Normal, 3, 4, "Name 2", "Descr 2")); //DEBUG
 			_encService = new EncodingService(new UTF8Encoding(), 96, 192);
 			_cryptService = new CryptService(_dataFile, maxCryptBlock: 512);
 		}
@@ -59,7 +62,7 @@ namespace DataModule
 			var _emptyFoldersCountT = _cryptService.ReadUInt16();
 			_cryptService.Seek(BYTES_BODY);
 
-			_folders.Capacity = _foldersCountT > 64 ? _foldersCountT.ToUpperPowerOf2() : 64;
+			//_folders.Capacity = _foldersCountT > 64 ? _foldersCountT.ToUpperPowerOf2() : 64;
 
 			long preFolderPos;
 			StatusEnum status;
@@ -235,6 +238,11 @@ namespace DataModule
 			WriteNewFolderInfo(fi); //write to file(find pos to fit folder)
 			_folders.Add(fi); //add to memory
 			UpdateBody(); //update body(last folder ID, folders count, <empty_folders count>?)
+		}
+
+		public void PreaddFolderInfo()
+		{
+			_folders.Insert(0, new(StatusEnum.Normal, 0, (ushort)(_lastFolderinfoId + 1), "", ""));
 		}
 		#endregion //DATA REG
 
