@@ -15,7 +15,7 @@ namespace UI.ViewModels
 			var services = new ServiceCollection();
 
 			services.AddSingleton<EncoderWindowVM>();
-			//services.AddSingleton<DataService>();
+			services.AddSingleton<DataService>((sp)=>new DataService("encdb"));
 
 			_provider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateOnBuild = true, ValidateScopes = true });
 			return true;
