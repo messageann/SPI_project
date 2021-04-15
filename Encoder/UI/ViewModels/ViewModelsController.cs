@@ -18,6 +18,8 @@ namespace UI.ViewModels
 			services.AddSingleton<DataService>((sp)=>new DataService("encdb"));
 
 			_provider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateOnBuild = true, ValidateScopes = true });
+
+			_provider.GetRequiredService<DataService>().Init();
 			return true;
 		}
 

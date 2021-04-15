@@ -7,7 +7,14 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="minus">
+	<DrawingImage x:Key="cross_purple">
+		<DrawingImage.Drawing>
+			<DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+				<GeometryDrawing Brush="#773079" Geometry="F1 M24,24z M0,0z M23.707,0.293L23.707,0.293A1,1,0,0,0,22.293,0.293L12,10.586 1.707,0.293A1,1,0,0,0,0.293,0.293L0.293,0.293A1,1,0,0,0,0.293,1.707L10.586,12 0.293,22.293A1,1,0,0,0,0.293,23.707L0.293,23.707A1,1,0,0,0,1.707,23.707L12,13.414 22.293,23.707A1,1,0,0,0,23.707,23.707L23.707,23.707A1,1,0,0,0,23.707,22.293L13.414,12 23.707,1.707A1,1,0,0,0,23.707,0.293z" />
+			</DrawingGroup>
+		</DrawingImage.Drawing>
+	</DrawingImage>
+	<DrawingImage x:Key="minus">
         <DrawingImage.Drawing>
             <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
                 <GeometryDrawing Brush="#858585">
@@ -43,9 +50,9 @@
             </DrawingGroup>
         </DrawingImage.Drawing>
     </DrawingImage>
-    <DrawingImage x:Key="clip">
-        <DrawingImage.Drawing>
-            <DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
+	<DrawingImage x:Key="clip">
+		<DrawingImage.Drawing>
+			<DrawingGroup ClipGeometry="M0,0 V24 H24 V0 H0 Z">
                 <GeometryDrawing Brush="#FFFFFF" Geometry="F1 M24,24z M0,0z M22.95,9.6A1,1,0,0,0,21.536,9.6L10.644,20.539A5,5,0,1,1,3.572,13.468L14.121,2.876A3,3,0,0,1,18.364,7.118L7.815,17.71A1.022,1.022,0,0,1,6.401,17.71A1,1,0,0,1,6.401,16.296L15.793,6.861A1,1,0,0,0,14.379,5.447L4.987,14.882A3,3,0,0,0,4.987,19.125A3.073,3.073,0,0,0,9.23,19.125L19.778,8.532A5,5,0,0,0,12.707,1.462L2.158,12.054A7,7,0,0,0,12.058,21.954L22.95,11.018A1,1,0,0,0,22.95,9.6z" />
             </DrawingGroup>
         </DrawingImage.Drawing>

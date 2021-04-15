@@ -1,14 +1,16 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Runtime.CompilerServices;
 using System.Text;
 using DataModule.Exceptions;
 using DataModule.Models;
 
 namespace DataModule
 {
-	public class DataService : IDisposable
+	public sealed class DataService : IDisposable
 	{
 		#region CONSTS
 		internal const int DEFAULT_FOLDERS_COUNT = 16;
@@ -26,32 +28,31 @@ namespace DataModule
 		private UInt16 _lastFolderinfoId;
 		private UInt16 FoldersCount => (ushort)_folders.Count;
 		private UInt16 EmptyFoldersCount => (ushort)_emptyFolderPoses.Count;
-
 		#endregion //BODY FIELDS
 
 		#region APP FIELDS
-		private readonly FileInfo _dataFile;
+		private readonly ObservableCollection<FolderInfo> _folders = new();
+		private readonly Queue<long> _emptyFolderPoses = new(DEFAULT_FOLDERS_COUNT);
 
-		//private readonly List<FolderInfo> _folders;
-		private readonly ObservableCollection<FolderInfo> _folders;
-		private readonly Queue<long> _emptyFolderPoses;
-
-		private readonly EncodingService _encService;
+		private readonly EncodingService _encService = new(new UTF8Encoding(), 96, 192);
 		private readonly CryptService _cryptService;
+
+		private int _editIndex = -1;
+
+		private bool _disposedValue = false;
 		#endregion APP FIELDS
+		public bool InEdit => _editIndex > -1;
+
+		private FolderInfo _copyEdit;
 
 		public ReadOnlyObservableCollection<FolderInfo> Folders => new(_folders);
 
 		public DataService(string dataPath)
 		{
-			_dataFile = new FileInfo(dataPath);
-			_emptyFolderPoses = new Queue<long>(DEFAULT_FOLDERS_COUNT);
-			//_folders = new List<FolderInfo>(DEFAULT_FOLDERS_COUNT);
-			_folders = new();
-			_folders.Add(new(StatusEnum.Normal, 2, 2, "Name1", "Descr1")); //DEBUG
+			//_folders.Add(new(StatusEnum.Normal, 2, 2, "Name1", "Descr1")); //DEBUG
 			//_folders.Add(new(StatusEnum.Normal, 3, 4, "Name 2", "Descr 2")); //DEBUG
-			_encService = new EncodingService(new UTF8Encoding(), 96, 192);
-			_cryptService = new CryptService(_dataFile, maxCryptBlock: 512);
+			//_folders.Add(new(StatusEnum.Normal | StatusEnum.Crypted, 4, 6, "Name 3 crypt", "Descr cr")); //DEBUG
+			_cryptService = new CryptService(new(dataPath), maxCryptBlock: 512);
 		}
 
 		public void Init()
@@ -83,7 +84,6 @@ namespace DataModule
 			}
 			while (_folders.Count < _foldersCountT)
 			{
-				preFolderPos = _cryptService.Position;
 				_folders.Add(ReadFolderInfoBody((StatusEnum)_cryptService.ReadUInt32()));
 			}
 		}
@@ -105,7 +105,7 @@ namespace DataModule
 		}
 
 		//write at current pos
-		private void WriteFolderInfo(FolderInfo fi)
+		private void WriteFolderInfoBody(FolderInfo fi)
 		{
 			fi.FilePos = _cryptService.Position;
 			_cryptService.Write((UInt32)fi.Status);
@@ -114,6 +114,10 @@ namespace DataModule
 			_cryptService.Write(_encService.GetBytes(fi.Name, FolderInfo.BYTES_NAME));
 			_cryptService.Write(_encService.GetBytes(fi.Description, FolderInfo.BYTES_DESCR));
 			_cryptService.FlushToFile();
+		}
+		private void WriteFolderInfo(FolderInfo fi)
+		{
+			WriteFolderInfoBody(fi);
 			int i;
 			for (i = 0; i < fi.Count; i++)
 			{
@@ -143,6 +147,7 @@ namespace DataModule
 			_cryptService.FlushToFile();
 		}
 
+
 		//find pos and write
 		private void WriteNewFolderInfo(FolderInfo fi)
 		{
@@ -161,6 +166,7 @@ namespace DataModule
 		//find pos and delete
 		private void DeleteFolderInfo(FolderInfo fi, bool forceZeroMem = false)
 		{
+			if (InEdit) throw new FolderInEditModeException(_folders[_editIndex]);
 			_cryptService.Seek(fi.FilePos);
 			if (forceZeroMem) //zero all folder
 			{
@@ -203,7 +209,7 @@ namespace DataModule
 				if (id == 0) return prepos;
 				_cryptService.Seek(prepos + LogInfo.BYTES_LOGINFO);
 			}
-			throw new ArgumentOutOfRangeException("fi");
+			throw new ArgumentOutOfRangeException(nameof(fi));
 		}
 		private long GetFreePosForFolderInfo(StatusEnum status)
 		{
@@ -242,7 +248,19 @@ namespace DataModule
 
 		public void PreaddFolderInfo()
 		{
-			_folders.Insert(0, new(StatusEnum.Normal, 0, (ushort)(_lastFolderinfoId + 1), "", ""));
+			_folders.Insert(0, new(StatusEnum.Normal, 0, ++_lastFolderinfoId, "", ""));
+			BeginEditFolderInfoBody(0);
+		}
+		public void CancelPreaddFolderInfo()
+		{
+			if (_editIndex == -1) throw new InvalidOperationException("No folders in edit mode!");
+			_folders.RemoveAt(_editIndex);
+			_editIndex = -1;
+			_lastFolderinfoId--;
+		}
+		public void SavePreaddedFolderInfo()
+		{
+			EndEditFolderInfoBody();
 		}
 		#endregion //DATA REG
 
@@ -286,11 +304,64 @@ namespace DataModule
 			DeleteLogInfo(fi, li, forceZeroMem); //remove loginfo from file and update folderinfo count prop
 			fi.RemoveAt(index); //remove loginfo from mem
 		}
+
+
+		public void BeginEditFolderInfoBody(int index)
+		{
+			if (InEdit) throw new FolderInEditModeException(_folders[_editIndex]);
+			_editIndex = index;
+			_copyEdit = _folders[_editIndex].CreateUserBodyCopy();
+			_folders[_editIndex].IsInited = false;
+		}
+		public void CancelEditFolderInfoBody()
+		{
+			if (!InEdit) throw new InvalidOperationException("No folders in edit mode!");
+			_copyEdit.CopyUserBodyTo(_folders[_editIndex]);
+			_folders[_editIndex].IsInited = true;
+			_editIndex = -1;
+			_copyEdit = null;
+		}
+		public void EndEditFolderInfoBody()
+		{
+			if (!InEdit) throw new InvalidOperationException("No folders in edit mode!");
+			var fi = _folders[_editIndex];
+			fi.IsInited = true;
+			if (fi.FilePos == 0)
+			{
+				WriteNewFolderInfo(fi);
+				UpdateBody();
+			}
+			else
+			{
+				_cryptService.Seek(fi.FilePos);
+				WriteFolderInfoBody(fi);
+			}
+			_editIndex = -1;
+			_copyEdit = null;
+		}
+
 		#endregion //DATA EDIT
 
+		private void Dispose(bool disposing)
+		{
+			if (!_disposedValue)
+			{
+				if (disposing)
+				{
+					// TODO: dispose managed state (managed objects)
+					_cryptService.Dispose();
+				}
+
+				// TODO: free unmanaged resources (unmanaged objects) and override finalizer
+				// TODO: set large fields to null
+				_disposedValue = true;
+			}
+		}
 		public void Dispose()
 		{
-			((IDisposable)_cryptService)?.Dispose();
+			// Do not change this code. Put cleanup code in 'Dispose(bool disposing)' method
+			Dispose(disposing: true);
+			GC.SuppressFinalize(this);
 		}
 	}
 }

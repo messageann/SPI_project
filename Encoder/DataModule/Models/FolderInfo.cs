@@ -49,8 +49,6 @@ namespace DataModule.Models
 		#region APP FIELDS
 		internal long FilePos;
 
-		//private int _head; //first element
-		//private int _tail; //last element
 		private int _liMemCount;
 		private bool _cached;
 
@@ -72,8 +70,9 @@ namespace DataModule.Models
 			{
 				return _name;
 			}
-			private set
+			set
 			{
+				if (_isInited) throw new MemberAccessException("Cant edit inited folder!");
 				_name = value;
 				NotifyPropertyChanged();
 			}
@@ -86,6 +85,7 @@ namespace DataModule.Models
 			}
 			set
 			{
+				if (_isInited) throw new MemberAccessException("Cant edit inited folder!");
 				_descr = value;
 				NotifyPropertyChanged();
 			}
@@ -95,27 +95,36 @@ namespace DataModule.Models
 		public bool IsFull => _count == _logInfos.Length;
 		public int Capacity => _logInfos.Length;
 
+		private bool _isInited;
+		public bool IsInited
+		{
+			get => _isInited;
+			set
+			{
+				_isInited = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private readonly bool _isCrypted;
+		public bool IsCrypted
+		{
+			get => _isCrypted;
+		}
+
 		internal readonly int SizeMultiplier;
 		#endregion //APP FIELDS
 
 		#region CONSTRUCTORS
-		internal FolderInfo(StatusEnum status, UInt16 count, ushort id, string name, string descr)
-		{
-			_status = status;
-			_count = count;
-			_id = id;
-			Name = name;
-			Description = descr;
-			SizeMultiplier = (int)(status & (StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8)) / 2;
 
-			_logInfos = new LogInfo[((int)status / 2 * DEFAULT_QUANTITY)];
+		private FolderInfo()
+		{
 			_liMemCount = 0;
-			//_head = 0;
-			//_tail = 0;
 			_cached = false;
+			_isInited = false;
 		}
 
-		internal FolderInfo(long filePos, StatusEnum status, UInt16 count, ushort id, string name, string descr)
+		internal FolderInfo(long filePos, StatusEnum status, UInt16 count, ushort id, string name, string descr) : this()
 		{
 			FilePos = filePos;
 			_status = status;
@@ -123,14 +132,14 @@ namespace DataModule.Models
 			_id = id;
 			Name = name;
 			Description = descr;
+			IsInited = true;
 			SizeMultiplier = (int)(status & AllLengths) / 2;
 
 			_logInfos = new LogInfo[((int)status / 2 * DEFAULT_QUANTITY)];
-			_liMemCount = 0;
-			//_head = 0;
-			//_tail = 0;
-			_cached = false;
+			_isCrypted = (_status & StatusEnum.Crypted) == StatusEnum.Crypted;
 		}
+
+		internal FolderInfo(StatusEnum status, UInt16 count, ushort id, string name, string descr) : this(0, status, count, id, name, descr) { }
 		#endregion //CONSTRUCTORS
 
 		internal int GetExtraNullFoldersCount()
@@ -209,8 +218,8 @@ namespace DataModule.Models
 		IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_logInfos, _liMemCount);
 		private class Enumerator : IEnumerator
 		{
-			private LogInfo[] _arr;
-			private int _count;
+			private readonly LogInfo[] _arr;
+			private readonly int _count;
 			//private int _head;
 			//private int _tail;
 			private int _pos;
@@ -246,7 +255,19 @@ namespace DataModule.Models
 		{
 			CollectionChanged?.Invoke(this, e);
 		}
+
 		#endregion //NOTIFS
+		public FolderInfo CreateUserBodyCopy()
+		{
+			FolderInfo res = new(this.FilePos, this.Status, this.Count, this.Id, this.Name, this.Description);
+			return res;
+		}
+
+		public void CopyUserBodyTo(FolderInfo dest)
+		{
+			dest.Name = this.Name;
+			dest.Description = this.Description;
+		}
 
 		#region STATIC
 		static FolderInfo()
