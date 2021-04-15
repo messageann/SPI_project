@@ -37,9 +37,6 @@
                 <Image Source ="{StaticResource minus}" Width="20" Height="20" Margin="0,10,0,0"/>
             </exc:ButtonEx>
             <Border CornerRadius="0,15,15,0" Background="{StaticResource DefaultBackground}" Margin="0,0,10,0">
-                <b:Interaction.Behaviors>
-                    <bex:DragMoveWindowBehavior/>
-                </b:Interaction.Behaviors>
                 <Border.Effect>
                     <DropShadowEffect BlurRadius="4" Opacity="0.25" Direction="300" ShadowDepth="7"/>
                 </Border.Effect>

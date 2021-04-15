@@ -12,6 +12,7 @@
 				<ResourceDictionary>
 					<vmc:ViewModelsController x:Key="ViewModelsController"/>
 				</ResourceDictionary>
+				<ResourceDictionary Source="pack://application:,,,/WPFCoreEx;component/Styles/NoSelectionVisibleListViewItem.xaml"/>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</Application.Resources>
