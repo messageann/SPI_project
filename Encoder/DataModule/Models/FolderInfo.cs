@@ -4,7 +4,6 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Collections.Specialized;
 using System.ComponentModel;
-using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
@@ -19,51 +18,51 @@ namespace DataModule.Models
 		internal const int BYTES_STATUS = 4;
 		internal const int BYTES_QUANTITY = 2;
 		internal const int BYTES_ID = 2;
-		internal const int BYTES_NAME = 40;//dividable by 8
-		internal const int BYTES_DESCR = 144;//dividable by 8
+		internal const int BYTES_NAME = 40;
+		internal const int BYTES_DESCR = 112;
+		internal const int BYTES_HMAC = 32;
 		internal const int BYTES_BODY = 0
 			+ BYTES_STATUS
 			+ BYTES_QUANTITY
 			+ BYTES_ID
 			+ BYTES_NAME
 			+ BYTES_DESCR
+			+ BYTES_HMAC
 			;
 
 		internal const int BYTES_NULLFOLDER = BYTES_BODY + DEFAULT_QUANTITY * LogInfo.BYTES_LOGINFO;
+
+		internal const int BLOCKS_PER_BODY = BYTES_BODY / CryptService.BLOCK_SIZE;
+
+		internal const int BYTES_KEY = 256 / 8;
 		#endregion //CONSTS
 
 		#region BODY FIELDS
-		private readonly StatusEnum _status;
-
+		private StatusEnum _status;
 		private UInt16 _count;
-
 		private readonly UInt16 _id;
-
 		private string _name;
-
 		private string _descr;
-
+		private byte[] _hmac;
 		private readonly LogInfo[] _logInfos;
 		#endregion //BODY FIELDS
 
-		#region APP FIELDS
-		internal long FilePos;
-
-		private int _liMemCount;
-		private bool _cached;
-
+		#region BODY PROPS
 		public StatusEnum Status
 		{
 			get
 			{
 				return _status;
 			}
+			internal set
+			{
+				_status = value;
+				IsCrypted = (_status & StatusEnum.Crypted) == StatusEnum.Crypted;
+				NotifyPropertyChanged();
+			}
 		}
 		public UInt16 Count => _count; //count in file
-		public UInt16 Id
-		{
-			get => _id;
-		}
+		public UInt16 Id => _id;
 		public string Name
 		{
 			get
@@ -72,7 +71,7 @@ namespace DataModule.Models
 			}
 			set
 			{
-				if (_isInited) throw new MemberAccessException("Cant edit inited folder!");
+				if (_isInited) throw new InitModeException();
 				_name = value;
 				NotifyPropertyChanged();
 			}
@@ -85,17 +84,46 @@ namespace DataModule.Models
 			}
 			set
 			{
-				if (_isInited) throw new MemberAccessException("Cant edit inited folder!");
+				if (_isInited) throw new InitModeException();
 				_descr = value;
 				NotifyPropertyChanged();
 			}
 		}
-		public bool IsCached => _cached;
+		internal byte[] HMAC
+		{
+			get => _hmac;
+			set
+			{
+				if (_isInited) throw new InitModeException();
+				_hmac = value;
+				if(_hmac != NullFolderKey)
+				{
+					Status |= StatusEnum.Crypted;
+				}
+				else
+				{
+					Status &= ~StatusEnum.Crypted;
+				}
+			}
+		}
+		#endregion //BODY PROPS
 
+		#region APP FIELDS
+		internal long FilePos;
+		private int _liMemCount = 0;
+		private bool _cached = false;
+		private bool _isInited = false;
+		private bool _isCrypted;
+		internal readonly int SizeMultiplier;
+		internal byte[] _key = NullFolderKey;
+		private bool _hasKey = false;
+		#endregion //APP FIELDS
+
+		#region APP PROPS
+		public bool IsCached => _cached;
 		public bool IsFull => _count == _logInfos.Length;
 		public int Capacity => _logInfos.Length;
 
-		private bool _isInited;
 		public bool IsInited
 		{
 			get => _isInited;
@@ -105,50 +133,64 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-
-		private readonly bool _isCrypted;
 		public bool IsCrypted
 		{
 			get => _isCrypted;
+			private set
+			{
+				_isCrypted = value;
+				NotifyPropertyChanged();
+			}
 		}
-
-		internal readonly int SizeMultiplier;
-		#endregion //APP FIELDS
+		internal byte[] Key
+		{
+			get => _key;
+			set
+			{
+				_key = value;
+				HasKey = _key != NullFolderKey;
+			}
+		}
+		public bool HasKey
+		{
+			get => _hasKey;
+			private set
+			{
+				_hasKey = value;
+				NotifyPropertyChanged();
+			}
+		}
+		#endregion //APP PROPS
 
 		#region CONSTRUCTORS
-
-		private FolderInfo()
-		{
-			_liMemCount = 0;
-			_cached = false;
-			_isInited = false;
-		}
-
-		internal FolderInfo(long filePos, StatusEnum status, UInt16 count, ushort id, string name, string descr) : this()
+		internal FolderInfo(long filePos, StatusEnum status, UInt16 count, ushort id, string name, string descr, byte[] hmac)
 		{
 			FilePos = filePos;
-			_status = status;
+			Status = status;
 			_count = count;
 			_id = id;
 			Name = name;
 			Description = descr;
+			HMAC = (hmac == null || CryptService.BytesEqual(hmac, NullFolderKey)) ? NullFolderKey : hmac;
 			IsInited = true;
-			SizeMultiplier = (int)(status & AllLengths) / 2;
 
-			_logInfos = new LogInfo[((int)status / 2 * DEFAULT_QUANTITY)];
-			_isCrypted = (_status & StatusEnum.Crypted) == StatusEnum.Crypted;
+			SizeMultiplier = (int)(status & AllLengths) / 2;
+			_logInfos = new LogInfo[SizeMultiplier * DEFAULT_QUANTITY];
+
 		}
 
-		internal FolderInfo(StatusEnum status, UInt16 count, ushort id, string name, string descr) : this(0, status, count, id, name, descr) { }
+		internal FolderInfo(StatusEnum status, UInt16 count, ushort id, string name, string descr, byte[] hmac) : this(0, status, count, id, name, descr, hmac) { }
 		#endregion //CONSTRUCTORS
 
-		internal int GetExtraNullFoldersCount()
+		#region LENGTH HELPERS
+		internal int GetExtraNullBodysCount()
 		{
 			return SizeMultiplier - 1;
 		}
-		private static StatusEnum AllLengths => StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8;
 		internal int GetTotalByteLength() => BYTES_NULLFOLDER * SizeMultiplier;
+		#endregion //LENGTH HELPERS
 
+		#region LIST FUNCS
 		internal bool Add(LogInfo value)
 		{
 			if (IsFull || !_cached) return false;
@@ -156,7 +198,7 @@ namespace DataModule.Models
 			//_logInfos[_tail] = value;
 			_logInfos[_liMemCount++] = value;
 			_count++;
-			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value, _liMemCount-1));
+			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value, _liMemCount - 1));
 			return true;
 		}
 
@@ -184,12 +226,15 @@ namespace DataModule.Models
 				//return _logInfos[(_head + index) % _logInfos.Length];
 			}
 		}
+		#endregion LIST FUNCS
 
-		internal void ClearCache()
+		#region CACHE
+		public void ClearCache()
 		{
 			Array.Clear(_logInfos, 0, _logInfos.Length);
 			_liMemCount = 0;
 			_cached = false;
+			Key = NullFolderKey;
 			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 		}
 
@@ -213,15 +258,13 @@ namespace DataModule.Models
 			}
 			else throw new FolderCachedException(this);
 		}
+		#endregion //CACHE
 
 		#region IEnumerable interface
-		IEnumerator IEnumerable.GetEnumerator() => new Enumerator(_logInfos, _liMemCount);
-		private class Enumerator : IEnumerator
+		public class Enumerator : IEnumerator
 		{
 			private readonly LogInfo[] _arr;
 			private readonly int _count;
-			//private int _head;
-			//private int _tail;
 			private int _pos;
 			internal Enumerator(LogInfo[] arr, int count)
 			{
@@ -231,17 +274,18 @@ namespace DataModule.Models
 			}
 			object IEnumerator.Current => Current;
 			public LogInfo Current => _arr[_pos];
-			bool IEnumerator.MoveNext()
+			public bool MoveNext()
 			{
 				_pos++;
 				return (_pos < _count);
 			}
-			void IEnumerator.Reset()
+			public void Reset()
 			{
 				_pos = -1;
 			}
-			//check which current will 'foreach' use
 		}
+		IEnumerator IEnumerable.GetEnumerator() => GetEnumerator();
+		public Enumerator GetEnumerator() => new Enumerator(_logInfos, _liMemCount);
 		#endregion //IEnumerable interface
 
 		#region NOTIFS
@@ -255,19 +299,25 @@ namespace DataModule.Models
 		{
 			CollectionChanged?.Invoke(this, e);
 		}
-
 		#endregion //NOTIFS
+
+		#region BODY COPY
 		public FolderInfo CreateUserBodyCopy()
 		{
-			FolderInfo res = new(this.FilePos, this.Status, this.Count, this.Id, this.Name, this.Description);
+			FolderInfo res = new(this.FilePos, this.Status, this.Count, this.Id, this.Name, this.Description, HMAC);
+			res.Key = this.Key;
 			return res;
 		}
 
 		public void CopyUserBodyTo(FolderInfo dest)
 		{
+			dest.Status = this.Status;
+			//dest._hmac = this._hmac;// ??
 			dest.Name = this.Name;
 			dest.Description = this.Description;
+			dest.Key = this.Key;
 		}
+		#endregion //COPY
 
 		#region STATIC
 		static FolderInfo()
@@ -275,10 +325,17 @@ namespace DataModule.Models
 			NullBody[0] = 1;
 		}
 		internal static readonly byte[] NullBody = new byte[BYTES_BODY];
+		internal static readonly byte[] NullFolderKey = new byte[BYTES_KEY];
+		private static StatusEnum AllLengths => StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8;
 		#endregion //STATIC
+
+		public override string ToString()
+		{
+			return this.Name;
+		}
 	}
 
-	[Flags]//redurant?
+	[Flags]//redurant? //pohody net
 	public enum StatusEnum : UInt32
 	{
 		NULL = 1U << 0,
