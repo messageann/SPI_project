@@ -1,8 +1,5 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace DataModule
 {
@@ -40,6 +37,13 @@ namespace DataModule
 				Array.Clear(_bufferCharEncoding, bused, byteCount - bused); //find optimal
 				return new Span<byte>(pb, byteCount);
 			}
+		}
+
+		internal byte[] GetBytes(string value)
+		{
+			byte[] res = new byte[_enc.GetByteCount(value, true)];
+			_enc.Convert(value, res, true, out _, out _, out _);
+			return res;
 		}
 	}
 }
