@@ -56,6 +56,10 @@ namespace DataModule.Models
 			}
 			internal set
 			{
+				if (_isInited)
+				{
+					throw new InitModeException();
+				}
 				_status = value;
 				IsCrypted = (_status & StatusEnum.Crypted) == StatusEnum.Crypted;
 				NotifyPropertyChanged();
