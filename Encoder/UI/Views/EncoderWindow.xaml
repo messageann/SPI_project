@@ -9,7 +9,7 @@
         xmlns:local="clr-namespace:UI.Views"
 		xmlns:b="http://schemas.microsoft.com/xaml/behaviors"
 		xmlns:bex="clr-namespace:WPFCoreEx.Behaviors;assembly=WPFCoreEx"
-        mc:Ignorable="d"
+		mc:Ignorable="d"
 		WindowStyle="None" AllowsTransparency="True"
 		Background="{DynamicResource DefaultBackgroundBrush}"
 		Height="620" Width="930" MinHeight="620" MinWidth="930"
@@ -92,7 +92,7 @@
 					<Image Source ="{StaticResource folder}" Width="20"/>
 					<exc:ButtonEx x:Name="AddBtn" Margin="0,18,20,18" BorderThickness="0" Background="{StaticResource FolderEllipseBrush}" CornerRadius="10" DockPanel.Dock="Right"
 						Command="{Binding PreAddFolderInfoCommand}" Width="60" HorizontalContentAlignment="Stretch"
-								  IsEnabled="{Binding IsEditMode, Converter={exconvs:InverseBooleanConverter}}">
+								  IsEnabled="{Binding EditMode, Converter={exconvs:InverseEnumToBooleanConverter}}">
 						<DockPanel LastChildFill="False">
 							<TextBlock FontWeight="Regular" FontSize="14" VerticalAlignment="Center" Text="Add" Foreground="{StaticResource TextBrush}"
 									   HorizontalAlignment="Left" Margin="10,0,0,0"/>
@@ -109,7 +109,7 @@
 						  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
 					<ListView.ItemTemplate>
 						<DataTemplate>
-							<Grid Margin="20,0,20,10" Height="80">
+							<Grid x:Name="FolderInfoGrid" Margin="20,0,20,10" Height="80">
 								<Border x:Name="NormalFolderBorder" Background="{DynamicResource DefaultBackgroundBrush}" CornerRadius="15" Panel.ZIndex="1" >
 									<Border.Effect>
 										<DropShadowEffect BlurRadius="5" Opacity="0.25" Direction="310" ShadowDepth="5"/>
@@ -128,7 +128,8 @@
 													<Image Source="{StaticResource check}"/>
 												</exc:ButtonEx>
 												<exc:ButtonEx x:Name="CancelPreaddFolderInfoBtn" ButtonBehavior="ImageWithOpacity"
-															  Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.CancelEditModeFolderInfoCommand}">
+															  Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.CancelEditModeFolderInfoCommand}"
+															  IsCancel="True">
 													<Image Source="{StaticResource cross_purple}"/>
 												</exc:ButtonEx>
 											</StackPanel>
@@ -154,12 +155,13 @@
 												   Text="{Binding Count}" VerticalAlignment="Center" Margin="5,0,0,0"/>
 											</DockPanel>
 											<Border x:Name="FolderLockBorder" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" Height="26" Width="26"
-														Background="{DynamicResource FolderEllipseBrush}" CornerRadius="15">
+														Background="{DynamicResource FolderEllipseBrush}" CornerRadius="15"
+													Visibility="Visible">
 												<Grid>
 													<TextBox x:Name="FolderPassTextBox" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"
-																 IsHitTestVisible="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}"
-																 Margin="25,0,30,0"
-																 Foreground="{DynamicResource TextBrush}"/>
+															 Margin="25,0,30,0"
+															 Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.FolderPass, Mode=TwoWay}"
+															 Foreground="{DynamicResource TextBrush}"/>
 													<Image x:Name="FolderLockImg" Source="{StaticResource lock}" Margin="5,5,0,5" HorizontalAlignment="Left"/>
 													<exc:ButtonEx x:Name="UnlockFolderBtn" ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Right"
 																	  Margin="3"
@@ -177,7 +179,7 @@
 								</Border>
 								<Border x:Name="BakcgroundFolderBorder" Background="{DynamicResource SelectedFolderBrush}" CornerRadius="15" Panel.ZIndex="0"/>
 							</Grid>
-							<DataTemplate.Triggers>								
+							<DataTemplate.Triggers>
 								<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True">
 									<DataTrigger.EnterActions>
 										<BeginStoryboard>
@@ -248,8 +250,8 @@
 										</BeginStoryboard>
 									</DataTrigger.ExitActions>
 								</DataTrigger>
-								<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="False">
-									<Setter Property="Text" TargetName="FolderPassTextBox" Value=""/>
+								<DataTrigger Binding="{Binding HasKey}" Value="True">
+									<Setter TargetName="FolderLockImg" Property="Source" Value="{StaticResource unlock}"/>
 								</DataTrigger>
 								<MultiDataTrigger>
 									<MultiDataTrigger.Conditions>
@@ -264,6 +266,7 @@
 									<MultiDataTrigger.Conditions>
 										<Condition Binding="{Binding IsInited}" Value="True"/>
 										<Condition Binding="{Binding IsCrypted}" Value="True"/>
+										<Condition Binding="{Binding HasKey}" Value="False"/>
 										<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True"/>
 									</MultiDataTrigger.Conditions>
 									<MultiDataTrigger.Setters>
@@ -277,6 +280,33 @@
 									</MultiDataTrigger.Conditions>
 									<MultiDataTrigger.Setters>
 										<Setter Property="Visibility" TargetName="EditFolderInfoBtn" Value="Visible"/>
+									</MultiDataTrigger.Setters>
+								</MultiDataTrigger>
+								<MultiDataTrigger>
+									<MultiDataTrigger.Conditions>
+										<Condition Binding="{Binding IsCrypted}" Value="True"/>
+										<Condition Binding="{Binding HasKey}" Value="False"/>
+									</MultiDataTrigger.Conditions>
+									<MultiDataTrigger.Setters>
+										<Setter TargetName="EditFolderInfoBtn" Property="IsEnabled" Value="False"/>
+									</MultiDataTrigger.Setters>
+								</MultiDataTrigger>
+								<MultiDataTrigger>
+									<MultiDataTrigger.Conditions>
+										<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.EditMode}" Value="Preadd"/>
+										<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="False"/>
+									</MultiDataTrigger.Conditions>
+									<MultiDataTrigger.Setters>
+										<Setter TargetName="FolderInfoGrid" Property="IsHitTestVisible" Value="False"/>
+									</MultiDataTrigger.Setters>
+								</MultiDataTrigger>
+								<MultiDataTrigger>
+									<MultiDataTrigger.Conditions>
+										<Condition Binding="{Binding HasKey}" Value="True"/>
+										<Condition Binding="{Binding IsInited}" Value="True"/>
+									</MultiDataTrigger.Conditions>
+									<MultiDataTrigger.Setters>
+										<Setter TargetName="FolderPassTextBox" Property="IsReadOnly" Value="True"/>
 									</MultiDataTrigger.Setters>
 								</MultiDataTrigger>
 							</DataTemplate.Triggers>
