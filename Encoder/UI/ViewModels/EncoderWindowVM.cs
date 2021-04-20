@@ -4,6 +4,7 @@ using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
+using System.Windows;
 using System.Windows.Input;
 using WPFCoreEx.Bases;
 
@@ -22,13 +23,24 @@ namespace UI.ViewModels
 		public string Title => "Encoder";
 		public ReadOnlyObservableCollection<FolderInfo> Folders => _ds.Folders;
 
-		private bool _isEditMode;
-		public bool IsEditMode
+		private string _folderPass;
+		public string FolderPass
 		{
-			get => _isEditMode;
+			get => _folderPass;
 			set
 			{
-				_isEditMode = value;
+				_folderPass = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private EditMode _editMode = EditMode.None;
+		public EditMode EditMode
+		{
+			get => _editMode;
+			set
+			{
+				_editMode = value;
 				NotifyPropertyChanged();
 			}
 		}
@@ -39,21 +51,29 @@ namespace UI.ViewModels
 			get => _selectedFolderIndex;
 			set
 			{
+				if (_selectedFolderIndex >= 0)
+				{
+					Folders[_selectedFolderIndex].ClearCache();
+				}
 				_selectedFolderIndex = value;
+				if (this.EditMode == EditMode.Edit)
+				{
+					CancelEditModeFolderInfoCommand.Execute(null);
+				}
+				FolderPass = string.Empty;
 				NotifyPropertyChanged();
 			}
 		}
 		#endregion //PROPS
 
 		#region FIELDS
-		private EditMode _editMode = EditMode.None;
 		#endregion //FIELDS
 
 		#region COMMANDS
 
 		#region Edit mode FolderInfo commands
 		private RelayCommand _beginEditFolderInfoCommand;
-		public ICommand BeginEditFolderInfoCommand
+		public RelayCommand BeginEditFolderInfoCommand
 		{
 			get
 			{
@@ -61,8 +81,7 @@ namespace UI.ViewModels
 				{
 					_beginEditFolderInfoCommand = new((o) =>
 					{
-						IsEditMode = true;
-						_editMode = EditMode.Edit;
+						EditMode = EditMode.Edit;
 						_ds.BeginEditFolderInfoBody(_selectedFolderIndex);
 					});
 				}
@@ -71,7 +90,7 @@ namespace UI.ViewModels
 		}
 
 		private RelayCommand _preAddFolderInfoCommand;
-		public ICommand PreAddFolderInfoCommand
+		public RelayCommand PreAddFolderInfoCommand
 		{
 			get
 			{
@@ -79,7 +98,6 @@ namespace UI.ViewModels
 				{
 					_preAddFolderInfoCommand = new((o) =>
 					{
-						IsEditMode = true;
 						_editMode = EditMode.Preadd;
 						_ds.PreaddFolderInfo();
 						SelectedFolderIndex = 0;
@@ -90,7 +108,7 @@ namespace UI.ViewModels
 		}
 
 		private RelayCommand _cancelEditModeFolderInfoCommand;
-		public ICommand CancelEditModeFolderInfoCommand
+		public RelayCommand CancelEditModeFolderInfoCommand
 		{
 			get
 			{
@@ -107,8 +125,6 @@ namespace UI.ViewModels
 						{
 							_ds.CancelEditFolderInfoBody();
 						}
-						else throw new NotImplementedException($"Edit mode {_editMode}");
-						IsEditMode = false;
 						_editMode = EditMode.None;
 					});
 				}
@@ -117,7 +133,7 @@ namespace UI.ViewModels
 		}
 
 		private RelayCommand _saveEditableFolderInfoCommand;
-		public ICommand SaveEditableFolderInfoCommand
+		public RelayCommand SaveEditableFolderInfoCommand
 		{
 			get
 			{
@@ -125,16 +141,7 @@ namespace UI.ViewModels
 				{
 					_saveEditableFolderInfoCommand = new((o) =>
 					{
-						if (_editMode == EditMode.Preadd)
-						{
-							_ds.SavePreaddedFolderInfo();
-						}
-						else if(_editMode == EditMode.Edit)
-						{
-							_ds.EndEditFolderInfoBody();
-						}
-						else throw new NotImplementedException($"Edit mode {_editMode}");
-						IsEditMode = false;
+						_ds.EndEditFolderInfoBody(this._folderPass);
 						_editMode = EditMode.None;
 					});
 				}
@@ -145,7 +152,7 @@ namespace UI.ViewModels
 
 
 		private RelayCommand _unlockFolderCommand;
-		public ICommand UnlockFolderCommand
+		public RelayCommand UnlockFolderCommand
 		{
 			get
 			{
@@ -153,7 +160,10 @@ namespace UI.ViewModels
 				{
 					_unlockFolderCommand = new((o) =>
 					{
-
+						if(!_ds.TryReadFolderInfoContent(Folders[_selectedFolderIndex], this._folderPass))
+						{
+							MessageBox.Show("Wrong folder pass!");
+						}
 					});
 				}
 				return _unlockFolderCommand;
@@ -171,7 +181,7 @@ namespace UI.ViewModels
 		#endregion //NOTIFS
 	}
 
-	enum EditMode : byte
+	public enum EditMode : byte
 	{
 		None = 0,
 		Preadd = 1 << 0,
