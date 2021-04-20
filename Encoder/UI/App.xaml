@@ -13,9 +13,6 @@
 					<vmc:ViewModelsController x:Key="ViewModelsController"/>
 				</ResourceDictionary>
 				<ResourceDictionary Source="pack://application:,,,/WPFCoreEx;component/Styles/NoSelectionVisibleListViewItem.xaml"/>
-				<ResourceDictionary>
-					<BooleanToVisibilityConverter x:Key="BoolToVis"/>
-				</ResourceDictionary>
 			</ResourceDictionary.MergedDictionaries>
 		</ResourceDictionary>
 	</Application.Resources>
