@@ -15,17 +15,18 @@ namespace DataModule
 		#region CONSTS
 		internal const int DEFAULT_FOLDERS_COUNT = 16;
 
-		internal const byte BYTES_LASTLOGINFOID = 2;
-		internal const byte BYTES_LASTFOLDERINFOID = 2;
-		internal const byte BYTES_FOLDERSCOUNT = 2;
-		internal const byte BYTES_EMPTYFOLDERSCOUNT = 2;
+		internal const int BYTES_LASTLOGINFOID = sizeof(UInt32);
+		internal const int BYTES_LASTFOLDERINFOID = 2;
+		internal const int BYTES_FOLDERSCOUNT = 2;
+		internal const int BYTES_EMPTYFOLDERSCOUNT = 2;
 
-		internal const byte BYTES_BODY = 100;
+		internal const int BYTES_BODY = 128;
+		internal const int BLOCKS_PER_BODY = BYTES_BODY / CryptService.BLOCK_SIZE;
 		#endregion //CONSTS
 
 		#region BODY FIELDS
-		private UInt16 _lastLoginfoId;
-		private UInt16 _lastFolderinfoId;
+		private UInt32 _lastLoginfoId = 0;
+		private UInt16 _lastFolderinfoId = 0;
 		private UInt16 FoldersCount => (ushort)_folders.Count;
 		private UInt16 EmptyFoldersCount => (ushort)_emptyFolderPoses.Count;
 		#endregion //BODY FIELDS
@@ -37,311 +38,312 @@ namespace DataModule
 		private readonly EncodingService _encService = new(new UTF8Encoding(), 96, 192);
 		private readonly CryptService _cryptService;
 
-		private int _editIndex = -1;
+		private int _editFolderIndex = -1;
 
 		private bool _disposedValue = false;
 		#endregion APP FIELDS
-		public bool InEdit => _editIndex > -1;
+		public bool InEditFolder => _editFolderIndex != -1;
 
-		private FolderInfo _copyEdit;
+		private FolderInfo _copyEditFolder = null;
 
 		public ReadOnlyObservableCollection<FolderInfo> Folders => new(_folders);
 
 		public DataService(string dataPath)
 		{
-			//_folders.Add(new(StatusEnum.Normal, 2, 2, "Name1", "Descr1")); //DEBUG
-			//_folders.Add(new(StatusEnum.Normal, 3, 4, "Name 2", "Descr 2")); //DEBUG
-			//_folders.Add(new(StatusEnum.Normal | StatusEnum.Crypted, 4, 6, "Name 3 crypt", "Descr cr")); //DEBUG
-			_cryptService = new CryptService(new(dataPath), maxCryptBlock: 512);
+			_cryptService = new CryptService(new(dataPath));
 		}
 
 		public void Init()
 		{
-			_lastLoginfoId = _cryptService.ReadUInt16();
-			_lastFolderinfoId = _cryptService.ReadUInt16();
-			var _foldersCountT = _cryptService.ReadUInt16();
-			var _emptyFoldersCountT = _cryptService.ReadUInt16();
-			_cryptService.Seek(BYTES_BODY);
-
-			//_folders.Capacity = _foldersCountT > 64 ? _foldersCountT.ToUpperPowerOf2() : 64;
-
-			long preFolderPos;
-			StatusEnum status;
-
+			if (_cryptService.Length < BYTES_BODY)
+			{
+				UpdateBody();
+				return;
+			}
+			_cryptService.PrepareReadBlocks(BLOCKS_PER_BODY);
+			_lastLoginfoId = _cryptService.GetUInt32();
+			_lastFolderinfoId = _cryptService.GetUInt16();
+			int _foldersCountT = _cryptService.GetUInt16();
+			int _emptyFoldersCountT = _cryptService.GetUInt16();
+			long preFolderPos = 0;
+			FolderInfo fi;
 			while (_emptyFolderPoses.Count < _emptyFoldersCountT)
 			{
 				preFolderPos = _cryptService.Position;
-				status = (StatusEnum)_cryptService.ReadUInt32();
-				if ((status & StatusEnum.NULL) != 0 || status == 0) //null folder
+				fi = ReadFolderInfoBody();
+				if (fi == null)
 				{
 					_emptyFolderPoses.Enqueue(preFolderPos);
 					_cryptService.Seek(preFolderPos + FolderInfo.BYTES_NULLFOLDER);
 				}
-				else //non-null folder
+				else
 				{
-					_folders.Add(ReadFolderInfoBody(status));
+					_folders.Add(fi);
+					_cryptService.Seek(preFolderPos + fi.GetTotalByteLength());
 				}
 			}
 			while (_folders.Count < _foldersCountT)
 			{
-				_folders.Add(ReadFolderInfoBody((StatusEnum)_cryptService.ReadUInt32()));
+				fi = ReadFolderInfoBody();
+				_folders.Add(fi);
+				_cryptService.Seek(fi.FilePos + fi.GetTotalByteLength());
 			}
 		}
 
-		#region DATA IO
-		//read at current pos
-		private FolderInfo ReadFolderInfoBody(StatusEnum status)
-		{
-			var res = new FolderInfo(_cryptService.Position - FolderInfo.BYTES_STATUS, status, _cryptService.ReadUInt16(), _cryptService.ReadUInt16(),
-				_encService.GetString(_cryptService.ReadBytes(FolderInfo.BYTES_NAME)), _encService.GetString(_cryptService.ReadBytes(FolderInfo.BYTES_DESCR)));
-			_cryptService.Seek(res.FilePos + res.GetTotalByteLength());
-			return res;
-		}
-		private LogInfo ReadLogInfo(UInt16 id)
-		{
-			return new LogInfo(_cryptService.Position - LogInfo.BYTES_ID, id, (LogInfoAttributes)_cryptService.ReadUInt32(),
-				_encService.GetString(_cryptService.ReadBytes(LogInfo.BYTES_NAME)), _encService.GetString(_cryptService.ReadBytes(LogInfo.BYTES_DESCR)),
-				_cryptService.ReadDateTime(), _cryptService.ReadBytes(LogInfo.BYTES_CLOGIN).ToArray(), _cryptService.ReadBytes(LogInfo.BYTES_CPASS).ToArray());
-		}
-
-		//write at current pos
+		#region WRITE STRUCT
 		private void WriteFolderInfoBody(FolderInfo fi)
 		{
 			fi.FilePos = _cryptService.Position;
-			_cryptService.Write((UInt32)fi.Status);
+			_cryptService.PrepareWriteBlocks(FolderInfo.BLOCKS_PER_BODY);
+			_cryptService.Write((uint)fi.Status);
 			_cryptService.Write(fi.Count);
 			_cryptService.Write(fi.Id);
 			_cryptService.Write(_encService.GetBytes(fi.Name, FolderInfo.BYTES_NAME));
-			_cryptService.Write(_encService.GetBytes(fi.Description, FolderInfo.BYTES_DESCR));
-			_cryptService.FlushToFile();
-		}
-		private void WriteFolderInfo(FolderInfo fi)
-		{
-			WriteFolderInfoBody(fi);
-			int i;
-			for (i = 0; i < fi.Count; i++)
-			{
-				WriteLogInfo(fi[i]);
-			}
-			for (; i < fi.Capacity; i++)
-			{
-				_cryptService.Write(LogInfo.EmptyLogInfo); //this is slow, mb worth to try write big array instead of few smalls?
-				_cryptService.FlushToFile();
-			}
-			var nulls = fi.GetExtraNullFoldersCount();
-			for (i = 0; i < nulls; i++)
-			{
-				_cryptService.WriteThrough(FolderInfo.NullBody);
-			}
+			_cryptService.Write(_encService.GetBytes(fi.Name, FolderInfo.BYTES_DESCR));
+			_cryptService.Write(fi.HMAC);
+			_cryptService.FlushPreparedBlocks();
 		}
 		private void WriteLogInfo(LogInfo li)
 		{
 			li.FilePos = _cryptService.Position;
-			_cryptService.Write(li.Id);
-			_cryptService.Write((UInt32)li.Attributes);
-			_cryptService.Write(_encService.GetBytes(li.Name, LogInfo.BYTES_NAME));
-			_cryptService.Write(_encService.GetBytes(li.Descr, LogInfo.BYTES_DESCR));
-			_cryptService.Write(li.Date);
-			_cryptService.Write(li.CLogin);
-			_cryptService.Write(li.CPass);
-			_cryptService.FlushToFile();
+			_cryptService.PrepareWriteBlocks(LogInfo.BLOCKS_PER);
+			_cryptService.Write(li.ID);
+			_cryptService.Write((UInt16)li.Attributes);
+			_cryptService.Write(_encService.GetBytes(li.Name, 40));
+			_cryptService.Write(_encService.GetBytes(li.Description, 40));
+			_cryptService.Write(li.DateCreated);
+			_cryptService.Write(li.CryptedLogin);
+			_cryptService.Write(li.CryptedPass);
+			_cryptService.Write(li.HMAC);
+			_cryptService.FlushPreparedBlocks();
 		}
-
-
-		//find pos and write
-		private void WriteNewFolderInfo(FolderInfo fi)
+		private void WriteFolderInfoContent(FolderInfo fi)
 		{
-			_cryptService.Seek(GetFreePosForFolderInfo(fi.Status));
-			WriteFolderInfo(fi);
-		}
-		private void WriteNewLogInfo(FolderInfo fi, LogInfo li)
-		{
-			_cryptService.Seek(GetFreePosForLogInfo(fi));
-			WriteLogInfo(li);
-			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_STATUS);
-			_cryptService.Write((UInt16)(fi.Count + 1));
-			_cryptService.FlushToFile();
-		}
-
-		//find pos and delete
-		private void DeleteFolderInfo(FolderInfo fi, bool forceZeroMem = false)
-		{
-			if (InEdit) throw new FolderInEditModeException(_folders[_editIndex]);
-			_cryptService.Seek(fi.FilePos);
-			if (forceZeroMem) //zero all folder
+			int i = 0;
+			foreach (var li in fi)
 			{
-				var totalzise = fi.GetTotalByteLength();
-				Span<byte> buff = stackalloc byte[totalzise];
-				_cryptService.WriteThrough(buff);
+				WriteLogInfo(li); i++;
 			}
-			else //make status to NULL-folder
+			for (; i < fi.Capacity; i++)
 			{
-				_cryptService.Write((UInt32)(fi.Status | StatusEnum.NULL));
-				_cryptService.FlushToFile();
+				_cryptService.WriteAndFlush(LogInfo.EmptyLogInfo);
+			}
+			int nullbytes = fi.GetExtraNullBodysCount();
+			for (i = 0; i < nullbytes; i++)
+			{
+				_cryptService.WriteAndFlush(FolderInfo.NullBody);
 			}
 		}
-		private void DeleteLogInfo(FolderInfo fi, LogInfo li, bool forceZeroMem = false)
+		#endregion //WRITE STRUCT
+		#region READ STRUCT
+		private FolderInfo ReadFolderInfoBody()
 		{
-			_cryptService.Seek(li.FilePos);
-			if (forceZeroMem)
-			{
-				_cryptService.WriteThrough(LogInfo.EmptyLogInfo);
-			}
-			else
-			{
-				_cryptService.Write((UInt16)0);
-				_cryptService.FlushToFile();
-			}
-			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_STATUS);
-			_cryptService.Write((UInt16)(fi.Count - 1));
-			_cryptService.FlushToFile();
+			long pos = _cryptService.Position;
+			_cryptService.PrepareReadBlocks(FolderInfo.BLOCKS_PER_BODY);
+			StatusEnum status = (StatusEnum)_cryptService.GetUInt32();
+			if ((status & StatusEnum.NULL) == StatusEnum.NULL) return null;
+			return new FolderInfo(pos, status, _cryptService.GetUInt16(), _cryptService.GetUInt16(),
+				_encService.GetString(_cryptService.GetBytes(FolderInfo.BYTES_NAME)),
+				_encService.GetString(_cryptService.GetBytes(FolderInfo.BYTES_DESCR)),
+				_cryptService.GetBytes(FolderInfo.BYTES_HMAC).ToArray());
 		}
-
-		private long GetFreePosForLogInfo(FolderInfo fi)
-		{
-			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_BODY);
-			UInt16 id;
-			long prepos;
-			for (int i = 0; i < fi.Capacity; i++)
-			{
-				prepos = _cryptService.Position;
-				id = _cryptService.ReadUInt16();
-				if (id == 0) return prepos;
-				_cryptService.Seek(prepos + LogInfo.BYTES_LOGINFO);
-			}
-			throw new ArgumentOutOfRangeException(nameof(fi));
-		}
-		private long GetFreePosForFolderInfo(StatusEnum status)
-		{
-			return (((status & StatusEnum.Normal) != 0) && _emptyFolderPoses.TryDequeue(out long res)) ? res : _cryptService.Length;
-		}
-
-		private void UpdateBody()
-		{
-			_cryptService.Seek(0);
-			_cryptService.Write(_lastLoginfoId);
-			_cryptService.Write(_lastFolderinfoId);
-			_cryptService.Write(FoldersCount);
-			_cryptService.Write(EmptyFoldersCount);
-			_cryptService.FlushToFile();
-		}
-		#endregion //DATA IO
-
-		#region DATA REG
-		public void RegLogInfo(FolderInfo fi, string name, string descr, string login, string pass, CryptMethod cryptMethod)
-		{
-			if (fi.IsFull) throw new ArgumentOutOfRangeException("FolderInfo.Count", fi.Count, "Folder is full!");
-			var li = new LogInfo(++_lastLoginfoId, cryptMethod.Attrs, name, descr, DateTime.UtcNow,
-				_cryptService.Crypt(cryptMethod, _encService.GetBytes(login, LogInfo.BYTES_CLOGIN)).ToArray(),
-				_cryptService.Crypt(cryptMethod, _encService.GetBytes(pass, LogInfo.BYTES_CPASS)).ToArray()); //create loginfo
-			WriteNewLogInfo(fi, li); //write to file(also increment 'count' in folderinfo) with auto-pos
-			fi.Add(li); //add to memory(will not be added if folder not cached)
-			UpdateBody(); //update body(folders_count etc..)
-		}
-		public void RegFolderInfo(StatusEnum status, string name, string descr)
-		{
-			var fi = new FolderInfo(status, 0, ++_lastFolderinfoId, name, descr);
-			WriteNewFolderInfo(fi); //write to file(find pos to fit folder)
-			_folders.Add(fi); //add to memory
-			UpdateBody(); //update body(last folder ID, folders count, <empty_folders count>?)
-		}
-
-		public void PreaddFolderInfo()
-		{
-			_folders.Insert(0, new(StatusEnum.Normal, 0, ++_lastFolderinfoId, "", ""));
-			BeginEditFolderInfoBody(0);
-		}
-		public void CancelPreaddFolderInfo()
-		{
-			if (_editIndex == -1) throw new InvalidOperationException("No folders in edit mode!");
-			_folders.RemoveAt(_editIndex);
-			_editIndex = -1;
-			_lastFolderinfoId--;
-		}
-		public void SavePreaddedFolderInfo()
-		{
-			EndEditFolderInfoBody();
-		}
-		#endregion //DATA REG
-
-		#region DATA GET
 		public void ReadFolderInfoContent(FolderInfo fi, bool forceUpdate = false)
 		{
 			if (fi.IsCached)
 			{
-				if (!forceUpdate) throw new FolderCachedException(fi);
+				if (!forceUpdate) return;
 				else fi.ClearCache();
 			}
 			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_BODY);
 			var lis = fi.BeginCache();
-			UInt16 id;
-			UInt16 found = 0;
+			LogInfo li;
+			int found = 0;
 			while (found < fi.Count)
 			{
-				id = _cryptService.ReadUInt16();
-				if (id == 0) _cryptService.Seek(_cryptService.Position + LogInfo.BYTES_LOGINFO - LogInfo.BYTES_ID);
-				else lis[found++] = ReadLogInfo(id);
+				li = ReadLogInfo();
+
+				if (li != null)
+				{
+					lis[found++] = li;
+				}
 			}
 			fi.EndCache(found);
 		}
-		#endregion //DATA GET
+		public bool TryReadFolderInfoContent(FolderInfo fi, string pass)
+		{
+			if (!fi.IsCrypted) throw new FolderNotCryptedException(fi);
+			var folderkey = _cryptService.GetFolderKey(_encService.GetBytes(pass), fi.HMAC);
+			if (folderkey == null) return false;
+			fi.Key = folderkey;
+			_cryptService.AddFolderCryptLayer(fi.Key);
+			ReadFolderInfoContent(fi);
+			_cryptService.RemoveFolderCryptLayer();
+			return true;
+		}
+		private LogInfo ReadLogInfo()
+		{
+			long pos = _cryptService.Position;
+			UInt32 id = _cryptService.GetUInt32();
+			if (id < 1U) return null;
+			return new LogInfo(pos, id, (LogInfoAttributes)_cryptService.GetUInt16(),
+				_encService.GetString(_cryptService.GetBytes(LogInfo.BYTES_NAME)),
+				_encService.GetString(_cryptService.GetBytes(LogInfo.BYTES_DESCR)),
+				_cryptService.GetDateTime(),
+				_cryptService.GetBytes(LogInfo.BYTES_CLOGIN).ToArray(), _cryptService.GetBytes(LogInfo.BYTES_CPASS).ToArray(),
+				_cryptService.GetBytes(LogInfo.BYTES_HMAC).ToArray());
+		}
+		#endregion //READ STRUCT
+		#region UPDATE EXISTING DATA
+		private void UpdateBody()
+		{
+			_cryptService.Seek(0);
+			_cryptService.PrepareWriteBlocks(BLOCKS_PER_BODY);
+			_cryptService.Write(_lastLoginfoId);
+			_cryptService.Write(_lastFolderinfoId);
+			_cryptService.Write(FoldersCount);
+			_cryptService.Write(EmptyFoldersCount);
+			_cryptService.FlushPreparedBlocks();
+		}
+		private void UpdateFolderInfoBody(FolderInfo fi)
+		{
+			_cryptService.Seek(fi.FilePos);
+			WriteFolderInfoBody(fi);
+		}
+		private void UpdateLogInfo(LogInfo li)
+		{
+			_cryptService.Seek(li.FilePos);
+			WriteLogInfo(li);
+		}
+		#endregion //UPDATE EXISTING DATA
+		#region FIND POS
+		private long GetPosForFolderInfo(StatusEnum status)
+		{
+			return (status & StatusEnum.Normal) == StatusEnum.Normal || !_emptyFolderPoses.TryDequeue(out var pos) ? _cryptService.Length : pos;
+		}
+		private long GetPosForLogInfo(FolderInfo fi)
+		{
+			if (fi.IsFull) throw new FolderFullException(fi);
+			_cryptService.Seek(fi.FilePos + FolderInfo.BYTES_BODY);
+			long pos;
+			for (int i = 0; i < fi.Capacity; i++)
+			{
+				pos = _cryptService.Position;
+				_cryptService.PrepareReadBlocks(LogInfo.BLOCKS_PER);
+				if (_cryptService.GetUInt32() == 0)
+				{
+					return pos;
+				}
+			}
+			throw new ArgumentException("Cant find space for loginfo!", nameof(fi));
+		}
+		#endregion //FIND POS
 
-		#region DATA EDIT
-		public void RemoveFolderInfo(int index, bool forceZeroMem = false)
+		#region STRUCT PREADD
+		public void PreaddFolderInfo()
+		{
+			_folders.Insert(0, new FolderInfo(StatusEnum.Normal, 0, ++this._lastFolderinfoId, string.Empty, string.Empty, null));
+			BeginEditFolderInfoBody(0);
+		}
+		public void CancelPreaddFolderInfo()
+		{
+			if (_editFolderIndex == -1) throw new InvalidOperationException("No folders in edit mode!");
+			_folders.RemoveAt(_editFolderIndex);
+			_editFolderIndex = -1;
+			_lastFolderinfoId--;
+		}
+		#endregion //STRUCT PREADD
+
+		#region TOTAL REMOVE
+		public void RemoveFolderInfo(int index)
 		{
 			var fi = _folders[index]; //get folder
-			DeleteFolderInfo(fi, forceZeroMem); //remove folder from file
-			_folders.RemoveAt(index); //remove folder from mem
 			for (int i = 0; i < fi.SizeMultiplier; i++)
 			{
 				_emptyFolderPoses.Enqueue(fi.FilePos + (i * FolderInfo.BYTES_NULLFOLDER));
 			} //add pos to empty folders
+			fi.IsInited = false;
+			fi.Status |= StatusEnum.NULL;
+			fi.IsInited = true;
+			UpdateFolderInfoBody(fi);
+			_folders.RemoveAt(index);
 			UpdateBody(); //update body(folders count, empty folders count)
 		}
-		public void RemoveLogInfo(FolderInfo fi, int index, bool forceZeroMem = false)
+		public void RemoveLogInfo(FolderInfo fi, int index)
 		{
 			var li = fi[index]; //get item
-			DeleteLogInfo(fi, li, forceZeroMem); //remove loginfo from file and update folderinfo count prop
+			li.IsInited = false;
+			li.ID = 0;
+			li.IsInited = true;
+			UpdateLogInfo(li);
 			fi.RemoveAt(index); //remove loginfo from mem
 		}
+		#endregion //TOTAL REMOVE
 
-
+		#region DATA EDIT
 		public void BeginEditFolderInfoBody(int index)
 		{
-			if (InEdit) throw new FolderInEditModeException(_folders[_editIndex]);
-			_editIndex = index;
-			_copyEdit = _folders[_editIndex].CreateUserBodyCopy();
-			_folders[_editIndex].IsInited = false;
+			if (InEditFolder) throw new FolderInEditModeException(_folders[_editFolderIndex]);
+			var fi = _folders[index];
+			if (fi.IsCrypted && !fi.HasKey) throw new FolderNotUnlockedException(fi);
+			_copyEditFolder = fi.CreateUserBodyCopy();
+			fi.IsInited = false;
+			_editFolderIndex = index;
 		}
 		public void CancelEditFolderInfoBody()
 		{
-			if (!InEdit) throw new InvalidOperationException("No folders in edit mode!");
-			_copyEdit.CopyUserBodyTo(_folders[_editIndex]);
-			_folders[_editIndex].IsInited = true;
-			_editIndex = -1;
-			_copyEdit = null;
+			if (!InEditFolder) throw new InvalidOperationException("No folders in edit mode!");
+			_copyEditFolder.CopyUserBodyTo(_folders[_editFolderIndex]);
+			_folders[_editFolderIndex].IsInited = true;
+			_editFolderIndex = -1;
+			_copyEditFolder = null;
 		}
-		public void EndEditFolderInfoBody()
+		public void EndEditFolderInfoBody(string newPass)
 		{
-			if (!InEdit) throw new InvalidOperationException("No folders in edit mode!");
-			var fi = _folders[_editIndex];
-			fi.IsInited = true;
-			if (fi.FilePos == 0)
+			if (!InEditFolder) throw new InvalidOperationException("No folders in edit mode!");
+			var fi = _folders[_editFolderIndex];
+			bool passProvided = !string.IsNullOrEmpty(newPass);
+			if (fi.FilePos == 0L)
 			{
-				WriteNewFolderInfo(fi);
+				_cryptService.Seek(GetPosForFolderInfo(fi.Status));
+				if (passProvided)
+				{
+					fi.HMAC = _cryptService.CreateHMAC(_encService.GetBytes(newPass), out var key);
+					fi.Key = key;
+				}
+				WriteFolderInfoBody(fi);
+				if (passProvided)
+				{
+					_cryptService.AddFolderCryptLayer(fi.Key);
+				}
+				WriteFolderInfoContent(fi);
+				if (passProvided)
+				{
+					_cryptService.RemoveFolderCryptLayer();
+				}
 				UpdateBody();
 			}
 			else
 			{
-				_cryptService.Seek(fi.FilePos);
-				WriteFolderInfoBody(fi);
+				if (passProvided)
+				{
+					fi.HMAC = _cryptService.CreateHMAC(_encService.GetBytes(newPass), out var key);
+					fi.Key = key;
+				}
+				UpdateFolderInfoBody(fi);
+				if (passProvided)
+				{
+					_cryptService.AddFolderCryptLayer(fi.Key);
+					WriteFolderInfoContent(fi);
+					_cryptService.RemoveFolderCryptLayer();
+				}
 			}
-			_editIndex = -1;
-			_copyEdit = null;
+			fi.IsInited = true;
+			_editFolderIndex = -1;
+			_copyEditFolder = null;
 		}
-
 		#endregion //DATA EDIT
 
+		#region DISPOSE PATTERN
 		private void Dispose(bool disposing)
 		{
 			if (!_disposedValue)
@@ -349,7 +351,7 @@ namespace DataModule
 				if (disposing)
 				{
 					// TODO: dispose managed state (managed objects)
-					_cryptService.Dispose();
+					((IDisposable)_cryptService).Dispose();
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override finalizer
@@ -363,5 +365,6 @@ namespace DataModule
 			Dispose(disposing: true);
 			GC.SuppressFinalize(this);
 		}
+		#endregion //DISPOSE PATTERN
 	}
 }
