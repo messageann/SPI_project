@@ -88,7 +88,7 @@
 				</Grid.RowDefinitions>
 				<DockPanel x:Name="FoldersHeader" LastChildFill="False" Grid.Row="0">
 					<Label Content="Folders" FontWeight="Bold" FontSize="26" Foreground="{StaticResource TextBrush}"
-						   VerticalAlignment="Center"/>
+						   VerticalAlignment="Center" Margin="13, 0, 0, 0"/>
 					<Image Source ="{StaticResource folder}" Width="20"/>
 					<exc:ButtonEx x:Name="AddBtn" Margin="0,18,20,18" BorderThickness="0" Background="{StaticResource FolderEllipseBrush}" CornerRadius="10" DockPanel.Dock="Right"
 						Command="{Binding PreAddFolderInfoCommand}" Width="60" HorizontalContentAlignment="Stretch"
@@ -141,7 +141,8 @@
 											<TextBox x:Name="FolderNameTextBox" FontSize="18" FontWeight="Medium" Foreground="{DynamicResource TextBrush}" Background="{x:Null}"
 													 BorderThickness="0" BorderBrush="{StaticResource SelectedFolderBrush}" ex:Appearance.CornerRadius="5"
 													 Text="{Binding Name}" Margin="20,0,5,0" VerticalAlignment="Center" DockPanel.Dock="Left"
-													 IsHitTestVisible="{Binding IsInited, Converter={exconvs:InverseBooleanConverter}}"/>
+													 IsHitTestVisible="{Binding IsInited, Converter={exconvs:InverseBooleanConverter}}"
+                                                     ex:Appearance.HintText="Enter the name"/>
 										</DockPanel>
 										<Grid x:Name="BottomFolderGrid" Grid.Row="1">
 											<Grid.ColumnDefinitions>
