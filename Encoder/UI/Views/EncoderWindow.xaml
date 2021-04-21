@@ -17,308 +17,357 @@
         Title="{Binding Title}"
 		FontFamily="{DynamicResource DefaultFontFamily}"
 		>
-	<Window.Resources>
-		<ResourceDictionary Source="..\Styles\DefaultStyle.xaml"/>
-	</Window.Resources>
-	<WindowChrome.WindowChrome>
-		<WindowChrome CaptionHeight="40" ResizeBorderThickness="2"/>
-	</WindowChrome.WindowChrome>
+    <Window.Resources>
+        <ResourceDictionary Source="..\Styles\DefaultStyle.xaml"/>
+    </Window.Resources>
+    <WindowChrome.WindowChrome>
+        <WindowChrome CaptionHeight="40" ResizeBorderThickness="2"/>
+    </WindowChrome.WindowChrome>
 
-	<Grid>
-		<Grid.RowDefinitions>
-			<RowDefinition Height="40"/>
-			<RowDefinition Height="*"/>
-		</Grid.RowDefinitions>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="40"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
 
-		<DockPanel x:Name="Header" Grid.Row="0" LastChildFill="True" Panel.ZIndex="1">
-			<exc:ButtonEx x:Name="CloseBtn" ButtonBehavior="ImageWithOpacity" Height="40" Width="40" DockPanel.Dock="Right"
+        <DockPanel x:Name="Header" Grid.Row="0" LastChildFill="True" Panel.ZIndex="1">
+            <exc:ButtonEx x:Name="CloseBtn" ButtonBehavior="ImageWithOpacity" Height="40" Width="40" DockPanel.Dock="Right"
 						  Background="Transparent" BackgroundMouseOver="#FF4C4C51" BackgroundClick="#FF683636"
 						  WindowChrome.IsHitTestVisibleInChrome="True">
-				<Image Source ="{StaticResource cross}" Width="20" Height="20"/>
-				<b:Interaction.Behaviors>
-					<bex:ShutdownAppBehavior ShutdownCode="1"/>
-				</b:Interaction.Behaviors>
-			</exc:ButtonEx>
-			<exc:ButtonEx x:Name="MinimizeBtn" ButtonBehavior="ImageWithOpacity" Height="40" Width="40" DockPanel.Dock="Right"
+                <Image Source ="{StaticResource cross}" Width="20" Height="20"/>
+                <b:Interaction.Behaviors>
+                    <bex:ShutdownAppBehavior ShutdownCode="1"/>
+                </b:Interaction.Behaviors>
+            </exc:ButtonEx>
+            <exc:ButtonEx x:Name="MinimizeBtn" ButtonBehavior="ImageWithOpacity" Height="40" Width="40" DockPanel.Dock="Right"
 						  Background="Transparent" BackgroundMouseOver="#FF4C4C51" BackgroundClick="#FF424261"
 						  WindowChrome.IsHitTestVisibleInChrome="True">
-				<Image Source ="{StaticResource minus}" Width="20" Height="20" Margin="0,10,0,0"/>
-				<b:Interaction.Behaviors>
-					<bex:MinimizeAppBehavior/>
-				</b:Interaction.Behaviors>
-			</exc:ButtonEx>
-			<Border x:Name="HeaderBorder" CornerRadius="0,15,15,0" Background="{StaticResource DefaultBackgroundBrush}" Margin="0,0,10,0">
-				<Border.Effect>
-					<DropShadowEffect BlurRadius="4" Opacity="0.25" Direction="300" ShadowDepth="7"/>
-				</Border.Effect>
-				<Menu Margin="20,0,0,0" HorizontalAlignment="Left" WindowChrome.IsHitTestVisibleInChrome="True">
-					<exc:MenuItemEx Width="38">
-						<MenuItem.Header>
-							<Grid Width="26" Margin="0,0,0,0">
-								<Ellipse Fill="#773079" Width="26" Height="26"/>
-								<Image Source="{StaticResource user}" Width="20" Height="20" Margin="3,3,3,3"/>
-							</Grid>
-						</MenuItem.Header>
-						<exc:MenuItemEx Header="Info"/>
-						<exc:MenuItemEx Header="Exit"/>
-					</exc:MenuItemEx>
-					<exc:MenuItemEx Header="File" Width="33">
-						<exc:MenuItemEx Header="Import"/>
-						<exc:MenuItemEx Header="Export"/>
-						<exc:MenuItemEx Header="Exit">
-							<b:Interaction.Behaviors>
-								<bex:ShutdownAppBehavior ShutdownCode="2"/>
-							</b:Interaction.Behaviors>
-						</exc:MenuItemEx>
-					</exc:MenuItemEx>
-					<exc:MenuItemEx Header="Settings" Width="61"/>
-				</Menu>
-			</Border>
-		</DockPanel>
+                <Image Source ="{StaticResource minus}" Width="20" Height="20" Margin="0,10,0,0"/>
+                <b:Interaction.Behaviors>
+                    <bex:MinimizeAppBehavior/>
+                </b:Interaction.Behaviors>
+            </exc:ButtonEx>
+            <Border x:Name="HeaderBorder" CornerRadius="0,15,15,0" Background="{StaticResource DefaultBackgroundBrush}" Margin="0,0,10,0">
+                <Border.Effect>
+                    <DropShadowEffect BlurRadius="4" Opacity="0.25" Direction="300" ShadowDepth="7"/>
+                </Border.Effect>
+                <Menu Margin="20,0,0,0" HorizontalAlignment="Left" WindowChrome.IsHitTestVisibleInChrome="True">
+                    <exc:MenuItemEx Width="38">
+                        <MenuItem.Header>
+                            <Grid Width="26" Margin="0,0,0,0">
+                                <Ellipse Fill="#773079" Width="26" Height="26"/>
+                                <Image Source="{StaticResource user}" Width="20" Height="20" Margin="3,3,3,3"/>
+                            </Grid>
+                        </MenuItem.Header>
+                        <exc:MenuItemEx Header="Info"/>
+                        <exc:MenuItemEx Header="Exit"/>
+                    </exc:MenuItemEx>
+                    <exc:MenuItemEx Header="File" Width="33">
+                        <exc:MenuItemEx Header="Import"/>
+                        <exc:MenuItemEx Header="Export"/>
+                        <exc:MenuItemEx Header="Exit">
+                            <b:Interaction.Behaviors>
+                                <bex:ShutdownAppBehavior ShutdownCode="2"/>
+                            </b:Interaction.Behaviors>
+                        </exc:MenuItemEx>
+                    </exc:MenuItemEx>
+                    <exc:MenuItemEx Header="Settings" Width="61"/>
+                </Menu>
+            </Border>
+        </DockPanel>
 
-		<Grid x:Name="ContentGrid" Grid.Row="1">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Width="26*"/>
-				<ColumnDefinition Width="67*"/>
-			</Grid.ColumnDefinitions>
-			<Grid x:Name="FoldersGrid" Grid.Column="0" Background="{StaticResource FolderBackgroundBrush}">
-				<Grid.RowDefinitions>
-					<RowDefinition Height="60"/>
-					<RowDefinition Height="*"/>
-				</Grid.RowDefinitions>
-				<DockPanel x:Name="FoldersHeader" LastChildFill="False" Grid.Row="0">
-					<Label Content="Folders" FontWeight="Bold" FontSize="26" Foreground="{StaticResource TextBrush}"
+        <Grid x:Name="ContentGrid" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="26*"/>
+                <ColumnDefinition Width="67*"/>
+            </Grid.ColumnDefinitions>
+            <Grid x:Name="FoldersGrid" Grid.Column="0" Background="{StaticResource FolderBackgroundBrush}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel x:Name="FoldersHeader" LastChildFill="False" Grid.Row="0">
+                    <Label Content="Folders" FontWeight="Bold" FontSize="26" Foreground="{StaticResource TextBrush}"
 						   VerticalAlignment="Center" Margin="13, 0, 0, 0"/>
-					<Image Source ="{StaticResource folder}" Width="20"/>
-					<exc:ButtonEx x:Name="AddBtn" Margin="0,18,20,18" BorderThickness="0" Background="{StaticResource FolderEllipseBrush}" CornerRadius="10" DockPanel.Dock="Right"
+                    <Image Source ="{StaticResource folder}" Width="20"/>
+                    <exc:ButtonEx x:Name="AddBtn" Margin="0,18,20,18" BorderThickness="0" Background="{StaticResource FolderEllipseBrush}" CornerRadius="10" DockPanel.Dock="Right"
 						Command="{Binding PreAddFolderInfoCommand}" Width="60" HorizontalContentAlignment="Stretch"
 								  IsEnabled="{Binding EditMode, Converter={exconvs:InverseEnumToBooleanConverter}}">
-						<DockPanel LastChildFill="False">
-							<TextBlock FontWeight="Regular" FontSize="14" VerticalAlignment="Center" Text="Add" Foreground="{StaticResource TextBrush}"
+                        <DockPanel LastChildFill="False">
+                            <TextBlock FontWeight="Regular" FontSize="14" VerticalAlignment="Center" Text="Add" Foreground="{StaticResource TextBrush}"
 									   HorizontalAlignment="Left" Margin="10,0,0,0"/>
-							<Image Margin="0,5,7,5" Source="{StaticResource plus}" DockPanel.Dock="Right"/>
-						</DockPanel>
-					</exc:ButtonEx>
-				</DockPanel>
-				<ListView Background="Transparent" Grid.Row="1" x:Name="FoldersListView" BorderThickness="0"
+                            <Image Margin="0,5,7,5" Source="{StaticResource plus}" DockPanel.Dock="Right"/>
+                        </DockPanel>
+                    </exc:ButtonEx>
+                </DockPanel>
+                <ListView Background="Transparent" Grid.Row="1" x:Name="FoldersListView" BorderThickness="0"
 						  SelectionMode="Single"
 						  ItemsSource="{Binding Folders}"
 						  ItemContainerStyle="{StaticResource NoSelectionVisibleListViewItem}"
 						  SelectedIndex="{Binding SelectedFolderIndex}"
 						  Padding="-1,0,-1,0"
 						  ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-					<ListView.ItemTemplate>
-						<DataTemplate>
-							<Grid x:Name="FolderInfoGrid" Margin="20,0,20,10" Height="80">
-								<Border x:Name="NormalFolderBorder" Background="{DynamicResource DefaultBackgroundBrush}" CornerRadius="15" Panel.ZIndex="1" >
-									<Border.Effect>
-										<DropShadowEffect BlurRadius="5" Opacity="0.25" Direction="310" ShadowDepth="5"/>
-									</Border.Effect>
-									<Grid>
-										<Grid.RowDefinitions>
-											<RowDefinition Height="*"/>
-											<RowDefinition Height="*"/>
-										</Grid.RowDefinitions>
-										<DockPanel x:Name="HeaderFolderGrid" Grid.Row="0" LastChildFill="True">
-											<StackPanel x:Name="FolderCreationOperationsStackPanel" Orientation="Horizontal" DockPanel.Dock="Right"
+                    <ListView.ItemTemplate>
+                        <DataTemplate>
+                            <Grid x:Name="FolderInfoGrid" Margin="20,0,20,10" Height="80">
+                                <Border x:Name="NormalFolderBorder" Background="{DynamicResource DefaultBackgroundBrush}" CornerRadius="15" Panel.ZIndex="1" >
+                                    <Border.Effect>
+                                        <DropShadowEffect BlurRadius="5" Opacity="0.25" Direction="310" ShadowDepth="5"/>
+                                    </Border.Effect>
+                                    <Grid>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="*"/>
+                                            <RowDefinition Height="*"/>
+                                        </Grid.RowDefinitions>
+                                        <DockPanel x:Name="HeaderFolderGrid" Grid.Row="0" LastChildFill="True">
+                                            <StackPanel x:Name="FolderCreationOperationsStackPanel" Orientation="Horizontal" DockPanel.Dock="Right"
 														Height="16" Margin="0,0,10,0"
 														Visibility="{Binding IsInited, Converter={exconvs:InverseBooleanToVisibilityConverter}}">
-												<exc:ButtonEx x:Name="SavePreaddedFolderInfoBtn" ButtonBehavior="ImageWithOpacity" Margin="0,0,5,0"
+                                                <exc:ButtonEx x:Name="SavePreaddedFolderInfoBtn" ButtonBehavior="ImageWithOpacity" Margin="0,0,5,0"
 															  Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.SaveEditableFolderInfoCommand}">
-													<Image Source="{StaticResource check}"/>
-												</exc:ButtonEx>
-												<exc:ButtonEx x:Name="CancelPreaddFolderInfoBtn" ButtonBehavior="ImageWithOpacity"
+                                                    <Image Source="{StaticResource check}"/>
+                                                </exc:ButtonEx>
+                                                <exc:ButtonEx x:Name="CancelPreaddFolderInfoBtn" ButtonBehavior="ImageWithOpacity"
 															  Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.CancelEditModeFolderInfoCommand}"
 															  IsCancel="True">
-													<Image Source="{StaticResource cross_purple}"/>
-												</exc:ButtonEx>
-											</StackPanel>
-											<exc:ButtonEx x:Name="EditFolderInfoBtn" DockPanel.Dock="Right" ButtonBehavior="ImageWithOpacity"
+                                                    <Image Source="{StaticResource cross_purple}"/>
+                                                </exc:ButtonEx>
+                                            </StackPanel>
+                                            <exc:ButtonEx x:Name="EditFolderInfoBtn" DockPanel.Dock="Right" ButtonBehavior="ImageWithOpacity"
 														  Height="16" Margin="10" Visibility="Collapsed"
 														  Command="{Binding RelativeSource={RelativeSource AncestorType={x:Type Window}}, Path=DataContext.BeginEditFolderInfoCommand}">
-												<Image Source="{StaticResource edit}"/>
-											</exc:ButtonEx>
-											<TextBox x:Name="FolderNameTextBox" FontSize="18" FontWeight="Medium" Foreground="{DynamicResource TextBrush}" Background="{x:Null}"
+                                                <Image Source="{StaticResource edit}"/>
+                                            </exc:ButtonEx>
+                                            <TextBox x:Name="FolderNameTextBox" FontSize="18" FontWeight="Medium" Foreground="{DynamicResource TextBrush}" Background="{x:Null}"
 													 BorderThickness="0" BorderBrush="{StaticResource SelectedFolderBrush}" ex:Appearance.CornerRadius="5"
 													 Text="{Binding Name}" Margin="20,0,5,0" VerticalAlignment="Center" DockPanel.Dock="Left"
 													 IsHitTestVisible="{Binding IsInited, Converter={exconvs:InverseBooleanConverter}}"
                                                      ex:Appearance.HintText="Enter the name"/>
-										</DockPanel>
-										<Grid x:Name="BottomFolderGrid" Grid.Row="1">
-											<Grid.ColumnDefinitions>
-												<ColumnDefinition Width="*"/>
-												<ColumnDefinition Width="145"/>
-											</Grid.ColumnDefinitions>
-											<DockPanel x:Name="FolderCountDockPanel" Grid.Column="0" LastChildFill="False" Margin="20,0,0,0" Height="16">
-												<Image x:Name="FolderClipImg" Source="{StaticResource clip}"/>
-												<TextBlock x:Name="FolderCountTextBlock" Background="{x:Null}" FontSize="14" FontWeight="Regular" 
+                                        </DockPanel>
+                                        <Grid x:Name="BottomFolderGrid" Grid.Row="1">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="145"/>
+                                            </Grid.ColumnDefinitions>
+                                            <DockPanel x:Name="FolderCountDockPanel" Grid.Column="0" LastChildFill="False" Margin="20,0,0,0" Height="16">
+                                                <Image x:Name="FolderClipImg" Source="{StaticResource clip}"/>
+                                                <TextBlock x:Name="FolderCountTextBlock" Background="{x:Null}" FontSize="14" FontWeight="Regular" 
 														   Foreground="{DynamicResource TextBrush}"
 												   Text="{Binding Count}" VerticalAlignment="Center" Margin="5,0,0,0"/>
-											</DockPanel>
-											<Border x:Name="FolderLockBorder" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" Height="26" Width="26"
+                                            </DockPanel>
+                                            <Border x:Name="FolderLockBorder" Grid.Column="1" HorizontalAlignment="Right" Margin="0,0,20,0" Height="26" Width="26"
 														Background="{DynamicResource FolderEllipseBrush}" CornerRadius="15"
 													Visibility="Visible">
-												<Grid>
-													<TextBox x:Name="FolderPassTextBox" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"
+                                                <Grid>
+                                                    <TextBox x:Name="FolderPassTextBox" Background="Transparent" BorderThickness="0" VerticalContentAlignment="Center"
 															 Margin="25,0,30,0"
 															 Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.FolderPass, Mode=TwoWay}"
 															 Foreground="{DynamicResource TextBrush}"/>
-													<Image x:Name="FolderLockImg" Source="{StaticResource lock}" Margin="5,5,0,5" HorizontalAlignment="Left"/>
-													<exc:ButtonEx x:Name="UnlockFolderBtn" ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Right"
+                                                    <Image x:Name="FolderLockImg" Source="{StaticResource lock}" Margin="5,5,0,5" HorizontalAlignment="Left"/>
+                                                    <exc:ButtonEx x:Name="UnlockFolderBtn" ButtonBehavior="ImageWithOpacity" HorizontalAlignment="Right"
 																	  Margin="3"
 																	  Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.UnlockFolderCommand}"
 																  Visibility="Collapsed">
-														<Grid>
-															<Ellipse Stroke="{StaticResource TextBrush}"/>
-															<Image Source="{StaticResource angle_right}"/>
-														</Grid>
-													</exc:ButtonEx>
-												</Grid>
-											</Border>
-										</Grid>
-									</Grid>
-								</Border>
-								<Border x:Name="BakcgroundFolderBorder" Background="{DynamicResource SelectedFolderBrush}" CornerRadius="15" Panel.ZIndex="0"/>
-							</Grid>
-							<DataTemplate.Triggers>
-								<DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True">
-									<DataTrigger.EnterActions>
-										<BeginStoryboard>
-											<Storyboard>
-												<ThicknessAnimationUsingKeyFrames
+                                                        <Grid>
+                                                            <Ellipse Stroke="{StaticResource TextBrush}"/>
+                                                            <Image Source="{StaticResource angle_right}"/>
+                                                        </Grid>
+                                                    </exc:ButtonEx>
+                                                </Grid>
+                                            </Border>
+                                        </Grid>
+                                    </Grid>
+                                </Border>
+                                <Border x:Name="BakcgroundFolderBorder" Background="{DynamicResource SelectedFolderBrush}" CornerRadius="15" Panel.ZIndex="0"/>
+                            </Grid>
+                            <DataTemplate.Triggers>
+                                <DataTrigger Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True">
+                                    <DataTrigger.EnterActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ThicknessAnimationUsingKeyFrames
 													Storyboard.TargetName="NormalFolderBorder" Storyboard.TargetProperty="Margin" BeginTime="00:00:00">
-													<SplineThicknessKeyFrame KeyTime="00:00:0.5" Value="10,0,0,0"/>
-												</ThicknessAnimationUsingKeyFrames>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                    <SplineThicknessKeyFrame KeyTime="00:00:0.5" Value="10,0,0,0"/>
+                                                </ThicknessAnimationUsingKeyFrames>
+                                                <ColorAnimation FillBehavior="HoldEnd"
 													Storyboard.TargetName="NormalFolderBorder" Storyboard.TargetProperty="(Background).(SolidColorBrush.Color)"
 																To="{StaticResource SelectedFolderBackgroundColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 													Storyboard.TargetName="FolderNameTextBox" Storyboard.TargetProperty="(Foreground).(SolidColorBrush.Color)"
 																To="{StaticResource HighlightTextColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 													Storyboard.TargetName="FolderCountTextBlock" Storyboard.TargetProperty="(Foreground).(SolidColorBrush.Color)"
 																To="{StaticResource SelectedFolderColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderClipImg" Storyboard.TargetProperty="Source.Drawing.Children[0].Brush.Color"
 																To="{StaticResource SelectedFolderColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderLockImg" Storyboard.TargetProperty="Source.Drawing.Children[0].Brush.Color"
 																To="{StaticResource SelectedFolderBackgroundColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderLockImg" Storyboard.TargetProperty="Source.Drawing.Children[1].Brush.Color"
 																To="{StaticResource SelectedFolderBackgroundColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderLockBorder" Storyboard.TargetProperty="Background.Color"
 																To="{StaticResource SelectedFolderColor}" Duration="00:00:0.3"/>
-												<DoubleAnimation FillBehavior="HoldEnd"
+                                                <DoubleAnimation FillBehavior="HoldEnd"
 																 Storyboard.TargetName="FolderLockBorder" Storyboard.TargetProperty="Width"
 																 To="125" Duration="0:0:0.3"/>
-											</Storyboard>
-										</BeginStoryboard>
-									</DataTrigger.EnterActions>
-									<DataTrigger.ExitActions>
-										<BeginStoryboard>
-											<Storyboard>
-												<ThicknessAnimationUsingKeyFrames
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.EnterActions>
+                                    <DataTrigger.ExitActions>
+                                        <BeginStoryboard>
+                                            <Storyboard>
+                                                <ThicknessAnimationUsingKeyFrames
 													Storyboard.TargetName="NormalFolderBorder" Storyboard.TargetProperty="Margin" BeginTime="00:00:00">
-													<SplineThicknessKeyFrame KeyTime="00:00:0.5" Value="0"/>
-												</ThicknessAnimationUsingKeyFrames>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                    <SplineThicknessKeyFrame KeyTime="00:00:0.5" Value="0"/>
+                                                </ThicknessAnimationUsingKeyFrames>
+                                                <ColorAnimation FillBehavior="HoldEnd"
 													Storyboard.TargetName="NormalFolderBorder" Storyboard.TargetProperty="(Background).(SolidColorBrush.Color)"
 																To="{StaticResource DefaultBackgroundColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 													Storyboard.TargetName="FolderNameTextBox" Storyboard.TargetProperty="(Foreground).(SolidColorBrush.Color)"
 																To="{StaticResource TextColor}" Duration="00:00:0.5"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 													Storyboard.TargetName="FolderCountTextBlock" Storyboard.TargetProperty="(Foreground).(SolidColorBrush.Color)"
 																To="{StaticResource TextColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderClipImg" Storyboard.TargetProperty="Source.Drawing.Children[0].Brush.Color"
 																To="{StaticResource TextColor}" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderLockImg" Storyboard.TargetProperty="Source.Drawing.Children[0].Brush.Color"
 																To="#FF000000" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderLockImg" Storyboard.TargetProperty="Source.Drawing.Children[1].Brush.Color"
 																To="#FF000000" Duration="00:00:0.3"/>
-												<ColorAnimation FillBehavior="HoldEnd"
+                                                <ColorAnimation FillBehavior="HoldEnd"
 																Storyboard.TargetName="FolderLockBorder" Storyboard.TargetProperty="Background.Color"
 																To="{StaticResource FolderEllipseColor}" Duration="00:00:0.3"/>
-												<DoubleAnimation FillBehavior="HoldEnd"
+                                                <DoubleAnimation FillBehavior="HoldEnd"
 																 Storyboard.TargetName="FolderLockBorder" Storyboard.TargetProperty="Width"
 																 To="26" Duration="0:0:0.3"/>
-											</Storyboard>
-										</BeginStoryboard>
-									</DataTrigger.ExitActions>
-								</DataTrigger>
-								<DataTrigger Binding="{Binding HasKey}" Value="True">
-									<Setter TargetName="FolderLockImg" Property="Source" Value="{StaticResource unlock}"/>
-								</DataTrigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding IsInited}" Value="True"/>
-										<Condition Binding="{Binding IsCrypted}" Value="False"/>
-									</MultiDataTrigger.Conditions>
-									<MultiDataTrigger.Setters>
-										<Setter Property="Visibility" TargetName="FolderLockBorder" Value="Collapsed"/>
-									</MultiDataTrigger.Setters>
-								</MultiDataTrigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding IsInited}" Value="True"/>
-										<Condition Binding="{Binding IsCrypted}" Value="True"/>
-										<Condition Binding="{Binding HasKey}" Value="False"/>
-										<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True"/>
-									</MultiDataTrigger.Conditions>
-									<MultiDataTrigger.Setters>
-										<Setter Property="Visibility" TargetName="UnlockFolderBtn" Value="Visible"/>
-									</MultiDataTrigger.Setters>
-								</MultiDataTrigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding IsInited}" Value="True"/>
-										<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True"/>
-									</MultiDataTrigger.Conditions>
-									<MultiDataTrigger.Setters>
-										<Setter Property="Visibility" TargetName="EditFolderInfoBtn" Value="Visible"/>
-									</MultiDataTrigger.Setters>
-								</MultiDataTrigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding IsCrypted}" Value="True"/>
-										<Condition Binding="{Binding HasKey}" Value="False"/>
-									</MultiDataTrigger.Conditions>
-									<MultiDataTrigger.Setters>
-										<Setter TargetName="EditFolderInfoBtn" Property="IsEnabled" Value="False"/>
-									</MultiDataTrigger.Setters>
-								</MultiDataTrigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.EditMode}" Value="Preadd"/>
-										<Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="False"/>
-									</MultiDataTrigger.Conditions>
-									<MultiDataTrigger.Setters>
-										<Setter TargetName="FolderInfoGrid" Property="IsHitTestVisible" Value="False"/>
-									</MultiDataTrigger.Setters>
-								</MultiDataTrigger>
-								<MultiDataTrigger>
-									<MultiDataTrigger.Conditions>
-										<Condition Binding="{Binding HasKey}" Value="True"/>
-										<Condition Binding="{Binding IsInited}" Value="True"/>
-									</MultiDataTrigger.Conditions>
-									<MultiDataTrigger.Setters>
-										<Setter TargetName="FolderPassTextBox" Property="IsReadOnly" Value="True"/>
-									</MultiDataTrigger.Setters>
-								</MultiDataTrigger>
-							</DataTemplate.Triggers>
-						</DataTemplate>
-					</ListView.ItemTemplate>
-				</ListView>
-			</Grid>
+                                            </Storyboard>
+                                        </BeginStoryboard>
+                                    </DataTrigger.ExitActions>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding HasKey}" Value="True">
+                                    <Setter TargetName="FolderLockImg" Property="Source" Value="{StaticResource unlock}"/>
+                                </DataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsInited}" Value="True"/>
+                                        <Condition Binding="{Binding IsCrypted}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <MultiDataTrigger.Setters>
+                                        <Setter Property="Visibility" TargetName="FolderLockBorder" Value="Collapsed"/>
+                                    </MultiDataTrigger.Setters>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsInited}" Value="True"/>
+                                        <Condition Binding="{Binding IsCrypted}" Value="True"/>
+                                        <Condition Binding="{Binding HasKey}" Value="False"/>
+                                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <MultiDataTrigger.Setters>
+                                        <Setter Property="Visibility" TargetName="UnlockFolderBtn" Value="Visible"/>
+                                    </MultiDataTrigger.Setters>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsInited}" Value="True"/>
+                                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <MultiDataTrigger.Setters>
+                                        <Setter Property="Visibility" TargetName="EditFolderInfoBtn" Value="Visible"/>
+                                    </MultiDataTrigger.Setters>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding IsCrypted}" Value="True"/>
+                                        <Condition Binding="{Binding HasKey}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <MultiDataTrigger.Setters>
+                                        <Setter TargetName="EditFolderInfoBtn" Property="IsEnabled" Value="False"/>
+                                    </MultiDataTrigger.Setters>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.EditMode}" Value="Preadd"/>
+                                        <Condition Binding="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}" Value="False"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <MultiDataTrigger.Setters>
+                                        <Setter TargetName="FolderInfoGrid" Property="IsHitTestVisible" Value="False"/>
+                                    </MultiDataTrigger.Setters>
+                                </MultiDataTrigger>
+                                <MultiDataTrigger>
+                                    <MultiDataTrigger.Conditions>
+                                        <Condition Binding="{Binding HasKey}" Value="True"/>
+                                        <Condition Binding="{Binding IsInited}" Value="True"/>
+                                    </MultiDataTrigger.Conditions>
+                                    <MultiDataTrigger.Setters>
+                                        <Setter TargetName="FolderPassTextBox" Property="IsReadOnly" Value="True"/>
+                                    </MultiDataTrigger.Setters>
+                                </MultiDataTrigger>
+                            </DataTemplate.Triggers>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Grid>
 
-			<Grid x:Name="ItemsGrid" Grid.Column="1" Background="#363636">
-				<Label Content="Choose a folder" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="36" Foreground="#242424"/>
-			</Grid>
-		</Grid>
-	</Grid>
+            <Grid x:Name="Right" Grid.Column="1" Background="#363636" Visibility="Hidden">
+                <Label Content="Choose a folder" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="36" Foreground="#242424" Visibility="Visible"/>
+                <Label Content="Enter the passowrd" HorizontalAlignment="Center" VerticalAlignment="Center" FontWeight="Bold" FontSize="36" Foreground="#242424" Visibility="Hidden"/>
+                <TextBlock TextAlignment="Center" FontWeight="Bold" FontSize="36" Foreground="#242424" TextWrapping="Wrap"
+                           Width="408" Height="138" Text ="Create new folder&#10;and enter the password if you need" Visibility="Hidden"/>
+            </Grid>
+
+            <Grid x:Name="ItemsGrid" Grid.Column="1" Background="#363636" Visibility="Visible">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="60"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+                <DockPanel x:Name="ItemsHeader" LastChildFill="False" Grid.Row="0">
+                    <Label Content="Items" FontWeight="Bold" FontSize="26" Foreground="{StaticResource TextBrush}"
+						   VerticalAlignment="Center" Margin="13, 0, 0, 0"/>
+                    <Image Source ="{StaticResource clip}" Width="20"/>
+                    <exc:ButtonEx x:Name="AddItem" Margin="0,18,20,18" BorderThickness="0" Background="{StaticResource FolderEllipseBrush}" CornerRadius="10" DockPanel.Dock="Right"
+						Command="{Binding PreAddFolderInfoCommand}" Width="60" HorizontalContentAlignment="Stretch"
+								  IsEnabled="{Binding EditMode, Converter={exconvs:InverseEnumToBooleanConverter}}">
+                        <DockPanel LastChildFill="False">
+                            <TextBlock FontWeight="Regular" FontSize="14" VerticalAlignment="Center" Text="Add" Foreground="{StaticResource TextBrush}"
+									   HorizontalAlignment="Left" Margin="10,0,0,0"/>
+                            <Image Margin="0,5,7,5" Source="{StaticResource plus}" DockPanel.Dock="Right"/>
+                        </DockPanel>
+                    </exc:ButtonEx>
+                </DockPanel>
+                
+                <Grid Grid.Row="1" x:Name="Items" Width="630" Height="470" VerticalAlignment="Top">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="35"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="25"/>
+                        <ColumnDefinition Width="23*"/>
+                        <ColumnDefinition Width="23*"/>
+                        <ColumnDefinition Width="14*"/>
+                        <ColumnDefinition Width="11*"/>
+                        <ColumnDefinition Width="16*"/>
+                        <ColumnDefinition Width="29*"/>
+                        <ColumnDefinition Width="5*"/>
+                    </Grid.ColumnDefinitions>
+                    <Border Grid.Row="0" Grid.ColumnSpan="8" Background="{StaticResource SelectedFolderBrush}" CornerRadius="15, 15, 0, 0"/>
+                    <Label Grid.Row="0" Grid.Column="1" Content="Name" FontSize="14" VerticalContentAlignment="Center" FontWeight="Regular" Foreground="{StaticResource TextBrush}"/>
+                    <Label Grid.Row="0" Grid.Column="2" Content="Login" FontSize="14" VerticalContentAlignment="Center" FontWeight="Regular" Foreground="{StaticResource TextBrush}"/>
+                    <Label Grid.Row="0" Grid.Column="3" Content="Pass" FontSize="14" VerticalContentAlignment="Center" FontWeight="Regular" Foreground="{StaticResource TextBrush}"/>
+                    <Label Grid.Row="0" Grid.Column="4" Content="Level" FontSize="14" VerticalContentAlignment="Center" FontWeight="Regular" Foreground="{StaticResource TextBrush}"/>
+                    <Label Grid.Row="0" Grid.Column="5" Content="Keys" FontSize="14" VerticalContentAlignment="Center" FontWeight="Regular" Foreground="{StaticResource TextBrush}"/>
+                    <Label Grid.Row="0" Grid.Column="6" Content="Description" FontSize="14" VerticalContentAlignment="Center" FontWeight="Regular" Foreground="{StaticResource TextBrush}"/>
+                    <Border Grid.Row="1" Grid.ColumnSpan="8" Background="{StaticResource SelectedFolderBackgroundBrush}" CornerRadius="0, 0, 15, 15"/>
+                </Grid>
+            </Grid>
+        </Grid>
+    </Grid>
 </Window>
