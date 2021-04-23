@@ -25,7 +25,7 @@
 	<Color x:Key="SelectedFolderColor">#773079</Color>
 	<Color x:Key="SelectedFolderBackgroundColor">#DADADA</Color>
 	<SolidColorBrush x:Key="SelectedFolderBackgroundBrush" Color="#DADADA"/>
-	<FontFamily x:Key="DefaultFontFamily">Akzidenz-Grotesk Pro</FontFamily>
+	<FontFamily x:Key="DefaultFontFamily">Arial</FontFamily>
 
 	<Style TargetType="Menu">
 		<Style.Resources>
