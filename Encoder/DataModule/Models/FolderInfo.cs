@@ -65,7 +65,15 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-		public UInt16 Count => _count; //count in file
+		public UInt16 Count
+		{
+			get => _count;
+			set
+			{
+				_count = value;
+				NotifyPropertyChanged();
+			}
+		}
 		public UInt16 Id => _id;
 		public string Name
 		{
@@ -100,7 +108,7 @@ namespace DataModule.Models
 			{
 				if (_isInited) throw new InitModeException();
 				_hmac = value;
-				if(_hmac != NullFolderKey)
+				if(_hmac != CryptService.Empty256Bits)
 				{
 					Status |= StatusEnum.Crypted;
 				}
@@ -115,16 +123,24 @@ namespace DataModule.Models
 		#region APP FIELDS
 		internal long FilePos;
 		private int _liMemCount = 0;
-		private bool _cached = false;
+		private bool _isCached = false;
 		private bool _isInited = false;
 		private bool _isCrypted;
 		internal readonly int SizeMultiplier;
-		internal byte[] _key = NullFolderKey;
+		internal byte[] _key = CryptService.Empty256Bits;
 		private bool _hasKey = false;
 		#endregion //APP FIELDS
 
 		#region APP PROPS
-		public bool IsCached => _cached;
+		public bool IsCached
+		{
+			get => _isCached;
+			private set
+			{
+				_isCached = value;
+				NotifyPropertyChanged();
+			}
+		}
 		public bool IsFull => _count == _logInfos.Length;
 		public int Capacity => _logInfos.Length;
 
@@ -152,7 +168,7 @@ namespace DataModule.Models
 			set
 			{
 				_key = value;
-				HasKey = _key != NullFolderKey;
+				HasKey = _key != CryptService.Empty256Bits;
 			}
 		}
 		public bool HasKey
@@ -171,11 +187,11 @@ namespace DataModule.Models
 		{
 			FilePos = filePos;
 			Status = status;
-			_count = count;
+			Count = count;
 			_id = id;
 			Name = name;
 			Description = descr;
-			HMAC = (hmac == null || CryptService.BytesEqual(hmac, NullFolderKey)) ? NullFolderKey : hmac;
+			HMAC = (hmac == null || CryptService.BytesEqual(hmac, CryptService.Empty256Bits)) ? CryptService.Empty256Bits : hmac;
 			IsInited = true;
 
 			SizeMultiplier = (int)(status & AllLengths) / 2;
@@ -197,12 +213,27 @@ namespace DataModule.Models
 		#region LIST FUNCS
 		internal bool Add(LogInfo value)
 		{
-			if (IsFull || !_cached) return false;
+			if (IsFull || !IsCached) return false;
 			//_tail = (_tail + 1) % _logInfos.Length;
 			//_logInfos[_tail] = value;
 			_logInfos[_liMemCount++] = value;
-			_count++;
+			Count++;
 			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value, _liMemCount - 1));
+			return true;
+		}
+
+		internal bool Prepand(LogInfo value)
+		{
+			if (IsFull || !IsCached) return false;
+			int i = _liMemCount;
+			while (i > 0)
+			{
+				_logInfos[i] = _logInfos[--i];
+			}
+			_logInfos[0] = value;
+			Count++;
+			_liMemCount++;
+			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, value, 0));
 			return true;
 		}
 
@@ -216,7 +247,7 @@ namespace DataModule.Models
 				Array.Copy(_logInfos, index + 1, _logInfos, index, _liMemCount - index);
 			}
 			_logInfos[_liMemCount] = null;
-			_count--;
+			Count--;
 			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Remove, it, index));
 		}
 
@@ -235,26 +266,30 @@ namespace DataModule.Models
 		#region CACHE
 		public void ClearCache()
 		{
+			foreach(var i in this)
+			{
+				i.ClearCache();
+			}
 			Array.Clear(_logInfos, 0, _logInfos.Length);
 			_liMemCount = 0;
-			_cached = false;
-			Key = NullFolderKey;
+			IsCached = false;
+			Key = CryptService.Empty256Bits;
 			NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
 		}
 
 		internal LogInfo[] BeginCache()
 		{
-			if (!_cached) return _logInfos;
+			if (!IsCached) return _logInfos;
 			throw new FolderCachedException(this);
 		}
 
 		internal void EndCache(int count)
 		{
-			if (!_cached)
+			if (!IsCached)
 			{
 				_liMemCount = count;
-				_count = (ushort)count;
-				_cached = true;
+				Count = (ushort)count;
+				IsCached = true;
 				foreach (var t in this)
 				{
 					NotifyCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Add, t));
@@ -329,7 +364,6 @@ namespace DataModule.Models
 			NullBody[0] = 1;
 		}
 		internal static readonly byte[] NullBody = new byte[BYTES_BODY];
-		internal static readonly byte[] NullFolderKey = new byte[BYTES_KEY];
 		private static StatusEnum AllLengths => StatusEnum.Normal | StatusEnum.X2 | StatusEnum.X4 | StatusEnum.X8;
 		#endregion //STATIC
 
