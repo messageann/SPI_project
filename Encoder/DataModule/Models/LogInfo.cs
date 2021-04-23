@@ -31,7 +31,6 @@ namespace DataModule.Models
 			;
 		internal const int BLOCKS_PER = BYTES_LOGINFO / CryptService.BLOCK_SIZE;
 		#endregion //CONSTS
-		internal static readonly byte[] EmptyLogInfo = new byte[BYTES_LOGINFO];
 
 		#region BODY FIELDS
 		private UInt32 _id;
@@ -43,7 +42,7 @@ namespace DataModule.Models
 		private byte[] _cPass;
 		private byte[] _hmac;
 		#endregion //BODY FIELDS
-		private bool _isInited = false;
+
 		#region BODY PROPS
 		public UInt32 ID
 		{
@@ -58,7 +57,6 @@ namespace DataModule.Models
 				//NotifyPropertyChanged();
 			}
 		}
-
 		public LogInfoAttributes Attributes
 		{
 			get => _attributes;
@@ -72,7 +70,6 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-
 		public string Name
 		{
 			get => _name;
@@ -86,7 +83,6 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-
 		public string Description
 		{
 			get => _descr;
@@ -100,7 +96,6 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-
 		public DateTime DateCreated
 		{
 			get => _date;
@@ -114,7 +109,6 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-
 		internal byte[] CryptedLogin
 		{
 			get => _cLogin;
@@ -127,7 +121,6 @@ namespace DataModule.Models
 				_cLogin = value;
 			}
 		}
-
 		internal byte[] CryptedPass
 		{
 			get => _cPass;
@@ -140,12 +133,25 @@ namespace DataModule.Models
 				_cPass = value;
 			}
 		}
-
-		public byte[] HMAC
+		internal byte[] HMAC
 		{
 			get => _hmac;
+			set
+			{
+				if (_isInited) throw new InitModeException();
+				_hmac = value;
+			}
 		} 
+		#endregion //BODY PROPS
 
+		#region APP FIELDS
+		internal long FilePos;
+		private bool _isInited = false;
+		internal byte[] _key = CryptService.Empty256Bits;
+		private bool _hasKey = false;
+		#endregion //APP FIELDS
+
+		#region APP PROPS
 		public bool IsInited
 		{
 			get => _isInited;
@@ -155,12 +161,28 @@ namespace DataModule.Models
 				NotifyPropertyChanged();
 			}
 		}
-		#endregion //BODY PROPS
+		internal byte[] Key
+		{
+			get => _key;
+			set
+			{
+				_key = value;
+				HasKey = _key != CryptService.Empty256Bits;
+			}
+		}
+		public bool HasKey
+		{
+			get => _hasKey;
+			private set
+			{
+				_hasKey = value;
+				NotifyPropertyChanged();
+			}
+		}
+		#endregion //APP PROPS
 
-		internal long FilePos;
-
+		#region CTOR'S
 		public LogInfo(UInt32 id, LogInfoAttributes attributes, string name, string descr, DateTime date, byte[] clogin, byte[] cpass, byte[] hmac) : this(0, id, attributes, name, descr, date, clogin, cpass, hmac) { }
-
 		public LogInfo(long filepos, UInt32 id, LogInfoAttributes attributes, string name, string descr, DateTime date, byte[] clogin, byte[] cpass, byte[] hmac)
 		{
 			FilePos = filepos;
@@ -172,7 +194,9 @@ namespace DataModule.Models
 			_cLogin = clogin;
 			_cPass = cpass;
 			_hmac = hmac;
+			IsInited = true;
 		}
+		#endregion //CTOR'S
 
 		#region NOTIFS
 		public event PropertyChangedEventHandler PropertyChanged;
@@ -181,6 +205,37 @@ namespace DataModule.Models
 			PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
 		}
 		#endregion //NOTIFS
+
+		#region COPY
+		public LogInfo ShallowCopy()
+		{
+			LogInfo res = new(FilePos, _id, _attributes, _name, _descr, _date, _cLogin, _cPass, _hmac);
+			res.Key = this.Key;
+			return res;
+		}
+
+		public void ShallowCopyTo(LogInfo dest)
+		{
+			dest.FilePos = this.FilePos;
+			dest.ID = this._id;
+			dest.Attributes = this._attributes;
+			dest.Name = this._name;
+			dest.Description = this._descr;
+			dest.DateCreated = this._date;
+			dest.CryptedLogin = this._cLogin;
+			dest.CryptedPass = this._cPass;
+			dest._hmac = this._hmac;
+			dest.Key = this.Key;
+		}
+		#endregion //COPY
+
+		public void ClearCache()
+		{
+			CryptService.ClearBytes(this._key);
+			Key = CryptService.Empty256Bits;
+		}
+
+		internal static readonly byte[] EmptyLogInfo = new byte[BYTES_LOGINFO];
 	}
 
 	public enum LogInfoAttributes : UInt16
