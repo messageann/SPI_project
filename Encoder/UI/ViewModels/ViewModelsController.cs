@@ -1,6 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using System;
 using DataModule;
+using System.IO;
 
 namespace UI.ViewModels
 {
@@ -9,18 +10,14 @@ namespace UI.ViewModels
 		private static ServiceProvider _provider;
 		public static bool IsInitialized => _provider is not null;
 
-		public static bool Init()
+		public static void Init()
 		{
 			if (IsInitialized) throw new InvalidOperationException("reinit is not supported");
-			var services = new ServiceCollection();
-
-			services.AddSingleton<EncoderWindowVM>();
-			services.AddSingleton<DataService>((sp)=>new DataService("encdb"));
-
-			_provider = services.BuildServiceProvider(new ServiceProviderOptions() { ValidateOnBuild = true, ValidateScopes = true });
-
-			_provider.GetRequiredService<DataService>().Init();
-			return true;
+			_provider = new ServiceCollection()
+				.AddScoped<EncoderWindowVM>()
+				.AddScoped<DataService>().BuildServiceProvider(
+					new ServiceProviderOptions() { ValidateOnBuild = true, ValidateScopes = true }
+				);
 		}
 
 		public static void Unload()
@@ -28,6 +25,8 @@ namespace UI.ViewModels
 			_provider?.Dispose();
 		}
 
-		public static EncoderWindowVM EncoderWindowVM => _provider.GetRequiredService<EncoderWindowVM>();
+		//public static EncoderWindowVM EncoderWindowVM => _provider.GetRequiredService<EncoderWindowVM>();
+
+		public static IServiceScope GetScope() => _provider.GetRequiredService<IServiceScopeFactory>().CreateScope();
 	}
 }
