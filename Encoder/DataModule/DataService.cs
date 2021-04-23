@@ -15,12 +15,14 @@ namespace DataModule
 		#region CONSTS
 		internal const int DEFAULT_FOLDERS_COUNT = 16;
 
+		internal const int BYTES_HMAC = 32;
+
 		internal const int BYTES_LASTLOGINFOID = sizeof(UInt32);
 		internal const int BYTES_LASTFOLDERINFOID = 2;
 		internal const int BYTES_FOLDERSCOUNT = 2;
 		internal const int BYTES_EMPTYFOLDERSCOUNT = 2;
 
-		internal const int BYTES_BODY = 128;
+		internal const int BYTES_BODY = 128 - BYTES_HMAC;
 		internal const int BLOCKS_PER_BODY = BYTES_BODY / CryptService.BLOCK_SIZE;
 		#endregion //CONSTS
 
@@ -36,29 +38,42 @@ namespace DataModule
 		private readonly Queue<long> _emptyFolderPoses = new(DEFAULT_FOLDERS_COUNT);
 
 		private readonly EncodingService _encService = new(new UTF8Encoding(), 96, 192);
-		private readonly CryptService _cryptService;
+		private CryptService _cryptService;
 
 		private int _editFolderIndex = -1;
+		private int _editLogInfoIndex = -1;
+		private FolderInfo _editLogInfoFolder = null;
 
 		private bool _disposedValue = false;
 		#endregion APP FIELDS
 		public bool InEditFolder => _editFolderIndex != -1;
+		public bool InEditLogInfo => _editLogInfoIndex != -1;
 
 		private FolderInfo _copyEditFolder = null;
+		private LogInfo _copyEditLogInfo = null;
 
 		public ReadOnlyObservableCollection<FolderInfo> Folders => new(_folders);
 
-		public DataService(string dataPath)
+		public bool Init(FileInfo file, string pass)
 		{
-			_cryptService = new CryptService(new(dataPath));
-		}
-
-		public void Init()
-		{
+			_cryptService = new CryptService(file);
+			var hmac = _cryptService.CreateHMAC256FromKey(_encService.GetBytes(pass), out var key);
 			if (_cryptService.Length < BYTES_BODY)
 			{
+				_cryptService.WriteThroughCrypt(hmac);
+				_cryptService.Init(key);
 				UpdateBody();
-				return;
+				return true;
+			}
+			else
+			{
+				Span<byte> temp_b = stackalloc byte[BYTES_HMAC];
+				_cryptService.ReadThroughCrypt(temp_b);
+				if(!CryptService.BytesEqual(hmac, temp_b))
+				{
+					return false;
+				}
+				_cryptService.Init(key);
 			}
 			_cryptService.PrepareReadBlocks(BLOCKS_PER_BODY);
 			_lastLoginfoId = _cryptService.GetUInt32();
@@ -88,6 +103,7 @@ namespace DataModule
 				_folders.Add(fi);
 				_cryptService.Seek(fi.FilePos + fi.GetTotalByteLength());
 			}
+			return true;
 		}
 
 		#region WRITE STRUCT
@@ -109,8 +125,8 @@ namespace DataModule
 			_cryptService.PrepareWriteBlocks(LogInfo.BLOCKS_PER);
 			_cryptService.Write(li.ID);
 			_cryptService.Write((UInt16)li.Attributes);
-			_cryptService.Write(_encService.GetBytes(li.Name, 40));
-			_cryptService.Write(_encService.GetBytes(li.Description, 40));
+			_cryptService.Write(_encService.GetBytes(li.Name, LogInfo.BYTES_NAME));
+			_cryptService.Write(_encService.GetBytes(li.Description, LogInfo.BYTES_DESCR));
 			_cryptService.Write(li.DateCreated);
 			_cryptService.Write(li.CryptedLogin);
 			_cryptService.Write(li.CryptedPass);
@@ -175,14 +191,28 @@ namespace DataModule
 			var folderkey = _cryptService.GetFolderKey(_encService.GetBytes(pass), fi.HMAC);
 			if (folderkey == null) return false;
 			fi.Key = folderkey;
-			_cryptService.AddFolderCryptLayer(fi.Key);
+			_cryptService.AddAES256CryptLayerOne(fi.Key);
 			ReadFolderInfoContent(fi);
-			_cryptService.RemoveFolderCryptLayer();
+			_cryptService.RemoveAES256CryptLayerOne();
 			return true;
+		}
+		public bool TryReadLogInfoContent(LogInfo li, string passKey, out string login, out string pass)
+		{
+			var hmac = _cryptService.CreateHMAC256FromKey(_encService.GetBytes(passKey), out var key);
+			if (CryptService.BytesEqual(hmac, li.HMAC))
+			{
+				li.Key = key;
+				login = _encService.GetString(_cryptService.DecryptAES256(li.CryptedLogin, li.Key));
+				pass = _encService.GetString(_cryptService.DecryptAES256(li.CryptedPass, li.Key));
+				return true;
+			}
+			login = null; pass = null;
+			return false;
 		}
 		private LogInfo ReadLogInfo()
 		{
 			long pos = _cryptService.Position;
+			_cryptService.PrepareReadBlocks(LogInfo.BLOCKS_PER);
 			UInt32 id = _cryptService.GetUInt32();
 			if (id < 1U) return null;
 			return new LogInfo(pos, id, (LogInfoAttributes)_cryptService.GetUInt16(),
@@ -196,7 +226,7 @@ namespace DataModule
 		#region UPDATE EXISTING DATA
 		private void UpdateBody()
 		{
-			_cryptService.Seek(0);
+			_cryptService.Seek(BYTES_HMAC);
 			_cryptService.PrepareWriteBlocks(BLOCKS_PER_BODY);
 			_cryptService.Write(_lastLoginfoId);
 			_cryptService.Write(_lastFolderinfoId);
@@ -218,7 +248,7 @@ namespace DataModule
 		#region FIND POS
 		private long GetPosForFolderInfo(StatusEnum status)
 		{
-			return (status & StatusEnum.Normal) == StatusEnum.Normal || !_emptyFolderPoses.TryDequeue(out var pos) ? _cryptService.Length : pos;
+			return (status & StatusEnum.Normal) != StatusEnum.Normal || !_emptyFolderPoses.TryDequeue(out var pos) ? _cryptService.Length : pos;
 		}
 		private long GetPosForLogInfo(FolderInfo fi)
 		{
@@ -246,10 +276,26 @@ namespace DataModule
 		}
 		public void CancelPreaddFolderInfo()
 		{
-			if (_editFolderIndex == -1) throw new InvalidOperationException("No folders in edit mode!");
+			if (!InEditFolder) throw new InvalidOperationException("No folders in edit mode!");
 			_folders.RemoveAt(_editFolderIndex);
 			_editFolderIndex = -1;
 			_lastFolderinfoId--;
+		}
+		public void PreaddLogInfo(FolderInfo fi)
+		{
+			if (!fi.Prepand(new LogInfo(0, ++_lastLoginfoId, LogInfoAttributes.None, string.Empty, string.Empty, DateTime.Now, null, null, null)))
+			{
+				throw new FolderNotCachedException(fi);
+			}
+			BeginEditLogInfo(fi, 0, isNew: true);
+		}
+		public void CancelPreaddLogInfo()
+		{
+			if (!InEditLogInfo) throw new InvalidOperationException("No items in edit mode!");
+			_editLogInfoFolder.RemoveAt(_editLogInfoIndex);
+			_editLogInfoIndex = -1;
+			_editLogInfoFolder = null;
+			_lastLoginfoId--;
 		}
 		#endregion //STRUCT PREADD
 
@@ -274,20 +320,29 @@ namespace DataModule
 			li.IsInited = false;
 			li.ID = 0;
 			li.IsInited = true;
+			if (fi.HasKey)
+			{
+				_cryptService.AddAES256CryptLayerOne(fi.Key);
+			}
 			UpdateLogInfo(li);
+			if (fi.HasKey)
+			{
+				_cryptService.RemoveAES256CryptLayerOne();
+			}
 			fi.RemoveAt(index); //remove loginfo from mem
+			UpdateFolderInfoBody(fi); //update count in folder
 		}
 		#endregion //TOTAL REMOVE
 
 		#region DATA EDIT
 		public void BeginEditFolderInfoBody(int index)
 		{
-			if (InEditFolder) throw new FolderInEditModeException(_folders[_editFolderIndex]);
+			if (InEditFolder) throw new InEditModeException(_folders[_editFolderIndex]);
 			var fi = _folders[index];
-			if (fi.IsCrypted && !fi.HasKey) throw new FolderNotUnlockedException(fi);
+			if (fi.IsCrypted && !fi.HasKey) throw new NotUnlockedException(fi);
 			_copyEditFolder = fi.CreateUserBodyCopy();
-			fi.IsInited = false;
 			_editFolderIndex = index;
+			fi.IsInited = false;
 		}
 		public void CancelEditFolderInfoBody()
 		{
@@ -307,18 +362,18 @@ namespace DataModule
 				_cryptService.Seek(GetPosForFolderInfo(fi.Status));
 				if (passProvided)
 				{
-					fi.HMAC = _cryptService.CreateHMAC(_encService.GetBytes(newPass), out var key);
+					fi.HMAC = _cryptService.CreateHMAC256FromKey(_encService.GetBytes(newPass), out var key);
 					fi.Key = key;
 				}
 				WriteFolderInfoBody(fi);
 				if (passProvided)
 				{
-					_cryptService.AddFolderCryptLayer(fi.Key);
+					_cryptService.AddAES256CryptLayerOne(fi.Key);
 				}
 				WriteFolderInfoContent(fi);
 				if (passProvided)
 				{
-					_cryptService.RemoveFolderCryptLayer();
+					_cryptService.RemoveAES256CryptLayerOne();
 				}
 				UpdateBody();
 			}
@@ -326,20 +381,102 @@ namespace DataModule
 			{
 				if (passProvided)
 				{
-					fi.HMAC = _cryptService.CreateHMAC(_encService.GetBytes(newPass), out var key);
+					fi.HMAC = _cryptService.CreateHMAC256FromKey(_encService.GetBytes(newPass), out var key);
 					fi.Key = key;
 				}
 				UpdateFolderInfoBody(fi);
 				if (passProvided)
 				{
-					_cryptService.AddFolderCryptLayer(fi.Key);
+					_cryptService.AddAES256CryptLayerOne(fi.Key);
 					WriteFolderInfoContent(fi);
-					_cryptService.RemoveFolderCryptLayer();
+					_cryptService.RemoveAES256CryptLayerOne();
 				}
 			}
 			fi.IsInited = true;
 			_editFolderIndex = -1;
 			_copyEditFolder = null;
+		}
+
+		public void BeginEditLogInfo(FolderInfo fi, int index, bool isNew)
+		{
+			if (InEditLogInfo) throw new InEditModeException(_editLogInfoFolder[_editLogInfoIndex]);
+			var li = fi[index];
+			if (!li.HasKey && !isNew) throw new NotUnlockedException(li);
+			_copyEditLogInfo = li.ShallowCopy();
+			_editLogInfoIndex = index;
+			_editLogInfoFolder = fi;
+			li.IsInited = false;
+		}
+		public void CancelEditLogInfo()
+		{
+			if (!InEditLogInfo) throw new InvalidOperationException("No log's in edit mode!");
+			var ed = _editLogInfoFolder[_editLogInfoIndex];
+			_copyEditLogInfo.ShallowCopyTo(ed);
+			ed.IsInited = true;
+			_copyEditLogInfo = null;
+			_editLogInfoIndex = -1;
+			_editLogInfoFolder = null;
+		}
+		public void EndEditLogInfo(string newKey, string newLogin, string newPass)
+		{
+			if (!InEditLogInfo) throw new InvalidOperationException("No log's in edit mode!");
+			var li = _editLogInfoFolder[_editLogInfoIndex];
+			bool keyProvided = !string.IsNullOrEmpty(newKey);
+			if (li.FilePos == 0L)
+			{
+				if (!keyProvided) throw new NoPasswordException();
+				//li.HMAC = _cryptService.CreateHMAC256(_encService.GetBytes(newKey), out var key, li.CryptedLogin, li.CryptedPass); //MAKE hmac from log pass key
+				li.HMAC = _cryptService.CreateHMAC256FromKey(_encService.GetBytes(newKey), out var key);
+				li.Key = key;
+				if (string.IsNullOrEmpty(newLogin) || string.IsNullOrEmpty(newPass)) throw new InvalidOperationException("No login or pass!");
+				li.CryptedLogin = _cryptService.CryptAES256(
+					_encService.GetBytes(newLogin, LogInfo.BYTES_CLOGIN).ToArray(), li.Key);
+				li.CryptedPass = _cryptService.CryptAES256(
+					_encService.GetBytes(newPass, LogInfo.BYTES_CPASS).ToArray(), li.Key);
+				if (_editLogInfoFolder.HasKey)
+				{
+					_cryptService.AddAES256CryptLayerOne(_editLogInfoFolder.Key);
+				}
+				_cryptService.Seek(GetPosForLogInfo(_editLogInfoFolder));
+				WriteLogInfo(li);
+				if (_editLogInfoFolder.HasKey)
+				{
+					_cryptService.RemoveAES256CryptLayerOne();
+				}
+				UpdateFolderInfoBody(_editLogInfoFolder);
+			}
+			else
+			{
+				if (keyProvided)
+				{
+					//li.HMAC = _cryptService.CreateHMAC256(_encService.GetBytes(newKey), out var key, li.CryptedLogin, li.CryptedPass);
+					li.HMAC = _cryptService.CreateHMAC256FromKey(_encService.GetBytes(newKey), out var key);
+					li.Key = key;
+				}
+				if (!string.IsNullOrEmpty(newLogin))
+				{
+					li.CryptedLogin = _cryptService.CryptAES256(
+						_encService.GetBytes(newPass, LogInfo.BYTES_CLOGIN).ToArray(), li.Key);
+				}
+				if (!string.IsNullOrEmpty(newPass))
+				{
+					li.CryptedPass = _cryptService.CryptAES256(
+						_encService.GetBytes(newPass, LogInfo.BYTES_CPASS).ToArray(), li.Key);
+				}
+				if (_editLogInfoFolder.HasKey)
+				{
+					_cryptService.AddAES256CryptLayerOne(_editLogInfoFolder.Key);
+				}
+				UpdateLogInfo(li);
+				if (_editLogInfoFolder.HasKey)
+				{
+					_cryptService.RemoveAES256CryptLayerOne();
+				}
+			}
+			li.IsInited = true;
+			_copyEditLogInfo = null;
+			_editLogInfoIndex = -1;
+			_editLogInfoFolder = null;
 		}
 		#endregion //DATA EDIT
 
@@ -351,7 +488,7 @@ namespace DataModule
 				if (disposing)
 				{
 					// TODO: dispose managed state (managed objects)
-					((IDisposable)_cryptService).Dispose();
+					((IDisposable)_cryptService)?.Dispose();
 				}
 
 				// TODO: free unmanaged resources (unmanaged objects) and override finalizer
