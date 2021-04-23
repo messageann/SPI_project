@@ -143,11 +143,13 @@ namespace DataModule
 			for (; i < fi.Capacity; i++)
 			{
 				_cryptService.WriteAndFlush(LogInfo.EmptyLogInfo);
+				CryptService.ClearBytes(LogInfo.EmptyLogInfo);
 			}
 			int nullbytes = fi.GetExtraNullBodysCount();
 			for (i = 0; i < nullbytes; i++)
 			{
 				_cryptService.WriteAndFlush(FolderInfo.NullBody);
+				CryptService.ClearBytes(FolderInfo.NullBody);
 			}
 		}
 		#endregion //WRITE STRUCT
