@@ -473,6 +473,28 @@ namespace UI.ViewModels
 		}
 		#endregion //REMOVE
 
+		private RelayCommand<string> _encryptFileCommand;
+		public RelayCommand<string> EncryptFileCommand
+		{
+			get
+			{
+				if(_encryptFileCommand == null)
+				{
+					_encryptFileCommand = new((f) =>
+					{
+						if (f.EndsWith(".enc"))
+						{
+							_ds.DecryptFile(f);
+						}
+						else
+						{
+							_ds.EncryptFile(f);
+						}
+					});
+				}
+				return _encryptFileCommand;
+			}
+		}
 		#endregion //COMMANDS
 
 		#region NOTIFS

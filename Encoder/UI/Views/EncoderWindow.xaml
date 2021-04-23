@@ -17,7 +17,7 @@
 		Height="620" Width="930" MinHeight="620" MinWidth="930"
 		d:DataContext="{d:DesignInstance {x:Type vms:EncoderWindowVM}, IsDesignTimeCreatable=False}"
         Title="Encoder"
-		FontFamily="{DynamicResource DefaultFontFamily}" WindowStartupLocation="CenterScreen"
+		FontFamily="{DynamicResource DefaultFontFamily}" WindowStartupLocation="CenterScreen" Drop="MainWindow_Drop" AllowDrop="True"
 		>
 	<!--DataContext="{Binding Source={StaticResource ViewModelsController}, Path=EncoderWindowVM}"-->
 	<Window.Resources>

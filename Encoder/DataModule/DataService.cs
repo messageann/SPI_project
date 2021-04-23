@@ -69,7 +69,7 @@ namespace DataModule
 			{
 				Span<byte> temp_b = stackalloc byte[BYTES_HMAC];
 				_cryptService.ReadThroughCrypt(temp_b);
-				if(!CryptService.BytesEqual(hmac, temp_b))
+				if (!CryptService.BytesEqual(hmac, temp_b))
 				{
 					return false;
 				}
@@ -481,6 +481,58 @@ namespace DataModule
 			_editLogInfoFolder = null;
 		}
 		#endregion //DATA EDIT
+
+		public void EncryptFile(string file)
+		{
+			using (var en = _cryptService.GetEncryptor())
+			{
+				using (var fs = new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.SequentialScan))
+				{
+					byte[] buff = new byte[4096];
+					var br = fs.Read(buff);
+					fs.Position = 0;
+					if (br < CryptService.BLOCK_SIZE)
+					{
+						for (int i = 0; i < br; i++)
+						{
+							buff[i] ^= 22;
+						}
+					}
+					else
+					{
+						en.TransformBlock(buff, 0, br - (br % CryptService.BLOCK_SIZE), buff, 0);
+					}
+					fs.Write(buff, 0, br);
+				}
+			}
+			File.Move(file, file + ".enc");
+		}
+
+		public void DecryptFile(string file)
+		{
+			using (var de = _cryptService.GetDecryptor())
+			{
+				using (var fs = new FileStream(file, FileMode.Open, FileAccess.ReadWrite, FileShare.None, 4096, FileOptions.SequentialScan))
+				{
+					byte[] buff = new byte[4096];
+					var br = fs.Read(buff);
+					fs.Position = 0;
+					if (br < CryptService.BLOCK_SIZE)
+					{
+						for (int i = 0; i < br; i++)
+						{
+							buff[i] ^= 22;
+						}
+					}
+					else
+					{
+						de.TransformBlock(buff, 0, br - (br % CryptService.BLOCK_SIZE), buff, 0);
+					}
+					fs.Write(buff, 0, br);
+				}
+			}
+			File.Move(file, file.Substring(0,file.LastIndexOf(".enc")));
+		}
 
 		#region DISPOSE PATTERN
 		private void Dispose(bool disposing)

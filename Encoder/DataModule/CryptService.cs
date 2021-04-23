@@ -321,6 +321,10 @@ namespace DataModule
 			return res;
 		}
 
+		internal ICryptoTransform GetEncryptor() => _encryptFile;
+
+		internal ICryptoTransform GetDecryptor() => _decryptFile;
+
 		//internal Span<byte> Crypt(CryptMethod cryptMethod, Span<byte> value)
 		//{
 		//	if ((cryptMethod.Attrs & LogInfoAttributes.L1Crypt) == LogInfoAttributes.L1Crypt)
