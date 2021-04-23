@@ -1,11 +1,9 @@
 ﻿using DataModule;
 using DataModule.Models;
-using System;
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
-using System.Windows.Input;
 using WPFCoreEx.Bases;
 
 namespace UI.ViewModels
@@ -20,8 +18,81 @@ namespace UI.ViewModels
 		}
 
 		#region PROPS
-		public string Title => "Encoder";
+
+		private string _accountName;
+		public string AccountName
+		{
+			get => _accountName;
+			set
+			{
+				_accountName = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		#region FOLDERINFO'S
 		public ReadOnlyObservableCollection<FolderInfo> Folders => _ds.Folders;
+		private FolderInfo _selectedFolder = null;
+		public FolderInfo SelectedFolder
+		{
+			get => _selectedFolder;
+			set
+			{
+				if (_selectedFolder != null)
+				{
+					if (EditModeFolder == EditMode.Edit)
+					{
+						CancelEditModeFolderInfoCommand.Execute(null);
+					}
+					_selectedFolder.ClearCache();
+					FolderPass = string.Empty;
+				}
+				_selectedFolder = value;
+				if (_selectedFolder != null && !_selectedFolder.IsCrypted)
+				{
+					_ds.ReadFolderInfoContent(_selectedFolder);
+					IsContentReady = true;
+				}
+				else
+				{
+					IsContentReady = false;
+				}
+				NotifyPropertyChanged();
+			}
+		}
+
+		private int _selectedFolderIndex = -1;
+		public int SelectedFolderIndex
+		{
+			get => _selectedFolderIndex;
+			set
+			{
+				_selectedFolderIndex = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private bool _isContentReady = false;
+		public bool IsContentReady
+		{
+			get => _isContentReady;
+			private set
+			{
+				_isContentReady = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private EditMode _editModeFolder = EditMode.None;
+		public EditMode EditModeFolder
+		{
+			get => _editModeFolder;
+			set
+			{
+				_editModeFolder = value;
+				NotifyPropertyChanged();
+			}
+		}
 
 		private string _folderPass;
 		public string FolderPass
@@ -33,37 +104,87 @@ namespace UI.ViewModels
 				NotifyPropertyChanged();
 			}
 		}
+		#endregion //FOLDERINFO'S
 
-		private EditMode _editMode = EditMode.None;
-		public EditMode EditMode
+		#region LOGINFO'S
+		private LogInfo _selectedLogInfo;
+		public LogInfo SelectedLogInfo
 		{
-			get => _editMode;
+			get => _selectedLogInfo;
 			set
 			{
-				_editMode = value;
+				_selectedLogInfo = value;
 				NotifyPropertyChanged();
 			}
 		}
 
-		private int _selectedFolderIndex;
-		public int SelectedFolderIndex
+		private int _selectedLogInfoIndex = -1;
+		public int SelectedLogInfoIndex
 		{
-			get => _selectedFolderIndex;
+			get => _selectedLogInfoIndex;
 			set
 			{
-				if (_selectedFolderIndex >= 0)
+				if (_selectedLogInfoIndex >= 0)
 				{
-					Folders[_selectedFolderIndex].ClearCache();
+					_selectedLogInfo.ClearCache();
 				}
-				_selectedFolderIndex = value;
-				if (this.EditMode == EditMode.Edit)
+				_selectedLogInfoIndex = value;
+				if (this.EditModeLogInfo == EditMode.Edit)
 				{
-					CancelEditModeFolderInfoCommand.Execute(null);
+					CancelEditModeLogInfoCommand.Execute(null);
 				}
-				FolderPass = string.Empty;
+				LogInfoPass = string.Empty;
+				LogInfoDLogin = string.Empty;
+				LogInfoDPass = string.Empty;
 				NotifyPropertyChanged();
 			}
 		}
+
+		private string _loginfoPass;
+		public string LogInfoPass
+		{
+			get => _loginfoPass;
+			set
+			{
+				_loginfoPass = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private string _loginfoDPass;
+		public string LogInfoDPass
+		{
+			get => _loginfoDPass;
+			set
+			{
+				_loginfoDPass = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private string _loginfoDLogin;
+		public string LogInfoDLogin
+		{
+			get => _loginfoDLogin;
+			set
+			{
+				_loginfoDLogin = value;
+				NotifyPropertyChanged();
+			}
+		}
+
+		private EditMode _editModeLogInfo = EditMode.None;
+		public EditMode EditModeLogInfo
+		{
+			get => _editModeLogInfo;
+			set
+			{
+				_editModeLogInfo = value;
+				NotifyPropertyChanged();
+			}
+		}
+		#endregion //LOGINFO'S
+
 		#endregion //PROPS
 
 		#region FIELDS
@@ -71,7 +192,7 @@ namespace UI.ViewModels
 
 		#region COMMANDS
 
-		#region Edit mode FolderInfo commands
+		#region EDIT MODE FOLDERINFO
 		private RelayCommand _beginEditFolderInfoCommand;
 		public RelayCommand BeginEditFolderInfoCommand
 		{
@@ -81,7 +202,7 @@ namespace UI.ViewModels
 				{
 					_beginEditFolderInfoCommand = new((o) =>
 					{
-						EditMode = EditMode.Edit;
+						EditModeFolder = EditMode.Edit;
 						_ds.BeginEditFolderInfoBody(_selectedFolderIndex);
 					});
 				}
@@ -98,7 +219,7 @@ namespace UI.ViewModels
 				{
 					_preAddFolderInfoCommand = new((o) =>
 					{
-						_editMode = EditMode.Preadd;
+						EditModeFolder = EditMode.Preadd;
 						_ds.PreaddFolderInfo();
 						SelectedFolderIndex = 0;
 					});
@@ -116,16 +237,16 @@ namespace UI.ViewModels
 				{
 					_cancelEditModeFolderInfoCommand = new((o) =>
 					{
-						if (_editMode == EditMode.Preadd)
+						if (_editModeFolder == EditMode.Preadd)
 						{
 							SelectedFolderIndex = -1;
 							_ds.CancelPreaddFolderInfo();
 						}
-						else if (_editMode == EditMode.Edit)
+						else if (_editModeFolder == EditMode.Edit)
 						{
 							_ds.CancelEditFolderInfoBody();
 						}
-						_editMode = EditMode.None;
+						EditModeFolder = EditMode.None;
 					});
 				}
 				return _cancelEditModeFolderInfoCommand;
@@ -142,15 +263,118 @@ namespace UI.ViewModels
 					_saveEditableFolderInfoCommand = new((o) =>
 					{
 						_ds.EndEditFolderInfoBody(this._folderPass);
-						_editMode = EditMode.None;
+						EditModeFolder = EditMode.None;
+						FolderPass = string.Empty;
 					});
 				}
 				return _saveEditableFolderInfoCommand;
 			}
 		}
-		#endregion //Edit mode FolderInfo commands
+		#endregion //EDIT MODE FOLDERINFO
 
+		#region EDIT MODE LOGINFO
+		private RelayCommand _beginEditLogInfoCommand;
+		public RelayCommand BeginEditLogInfoCommand
+		{
+			get
+			{
+				if (_beginEditLogInfoCommand == null)
+				{
+					_beginEditLogInfoCommand = new((o) =>
+					{
+						EditModeLogInfo = EditMode.Edit;
+						_ds.BeginEditLogInfo(_selectedFolder, _selectedLogInfoIndex, isNew: false);
+					});
+				}
+				return _beginEditLogInfoCommand;
+			}
+		}
 
+		private RelayCommand _preAddLogInfoCommand;
+		public RelayCommand PreAddLogInfoCommand
+		{
+			get
+			{
+				if (_preAddLogInfoCommand == null)
+				{
+					_preAddLogInfoCommand = new((o) =>
+					{
+						EditModeLogInfo = EditMode.Preadd;
+						_ds.PreaddLogInfo(_selectedFolder);
+						SelectedLogInfoIndex = 0;
+					});
+				}
+				return _preAddLogInfoCommand;
+			}
+		}
+
+		private RelayCommand _cancelEditModeLogInfoCommand;
+		public RelayCommand CancelEditModeLogInfoCommand
+		{
+			get
+			{
+				if (_cancelEditModeLogInfoCommand == null)
+				{
+					_cancelEditModeLogInfoCommand = new((o) =>
+					{
+						if (_editModeLogInfo == EditMode.Preadd)
+						{
+							SelectedLogInfoIndex = -1;
+							_ds.CancelPreaddLogInfo();
+						}
+						else if (_editModeFolder == EditMode.Edit)
+						{
+							_ds.CancelEditLogInfo();
+						}
+						EditModeLogInfo = EditMode.None;
+					});
+				}
+				return _cancelEditModeLogInfoCommand;
+			}
+		}
+
+		private RelayCommand _saveEditableLogInfoCommand;
+		public RelayCommand SaveEditableLogInfoCommand
+		{
+			get
+			{
+				if (_saveEditableLogInfoCommand == null)
+				{
+					_saveEditableLogInfoCommand = new((o) =>
+					{
+						if (string.IsNullOrEmpty(LogInfoPass))
+						{
+							MessageBox.Show("Enter key!");
+						}
+						else if (string.IsNullOrEmpty(SelectedLogInfo.Name))
+						{
+							MessageBox.Show("Enter name!");
+						}
+						else if (string.IsNullOrEmpty(LogInfoDLogin))
+						{
+							MessageBox.Show("Enter login!");
+						}
+						else if (string.IsNullOrEmpty(LogInfoDPass))
+						{
+							MessageBox.Show("Enter password!");
+						}
+						else
+						{
+							_ds.EndEditLogInfo(this._loginfoPass, this._loginfoDLogin, this._loginfoDPass);
+							_selectedLogInfo.ClearCache();
+							EditModeLogInfo = EditMode.None;
+							LogInfoPass = string.Empty;
+							LogInfoDLogin = string.Empty;
+							LogInfoDPass = string.Empty;
+						}
+					});
+				}
+				return _saveEditableLogInfoCommand;
+			}
+		}
+		#endregion //EDIT MODE LOGINFO
+
+		#region LOCKS
 		private RelayCommand _unlockFolderCommand;
 		public RelayCommand UnlockFolderCommand
 		{
@@ -160,15 +384,94 @@ namespace UI.ViewModels
 				{
 					_unlockFolderCommand = new((o) =>
 					{
-						if(!_ds.TryReadFolderInfoContent(Folders[_selectedFolderIndex], this._folderPass))
+						if (!_ds.TryReadFolderInfoContent(_selectedFolder, this._folderPass))
 						{
 							MessageBox.Show("Wrong folder pass!");
+						}
+						else
+						{
+							FolderPass = string.Empty;
+							IsContentReady = true;
 						}
 					});
 				}
 				return _unlockFolderCommand;
 			}
 		}
+
+		private RelayCommand _toggleLockLogInfoCommand;
+		public RelayCommand ToggleLockLogInfoCommand
+		{
+			get
+			{
+				if (_toggleLockLogInfoCommand == null)
+				{
+					_toggleLockLogInfoCommand = new((o) =>
+					{
+						if (_selectedLogInfo.IsInited)
+						{
+							if (_selectedLogInfo.HasKey)
+							{
+								SelectedLogInfoIndex = -1;
+							}
+							else if (_ds.TryReadLogInfoContent(_selectedLogInfo, _loginfoPass, out var login, out var pass))
+							{
+								LogInfoDLogin = login;
+								LogInfoDPass = pass;
+							}
+							else
+							{
+								MessageBox.Show("Bad password!");
+							}
+						}
+						else
+						{
+							SaveEditableLogInfoCommand.Execute(null);
+						}
+					});
+				}
+				return _toggleLockLogInfoCommand;
+			}
+		}
+		#endregion //LOCKS
+
+		#region REMOVE
+		private RelayCommand _removeFolderInfoCommand;
+		public RelayCommand RemoveFolderInfoCommand
+		{
+			get
+			{
+				if (_removeFolderInfoCommand == null)
+				{
+					_removeFolderInfoCommand = new((o) =>
+					{
+						var t = _selectedFolderIndex;
+						SelectedFolderIndex = -1;
+						_ds.RemoveFolderInfo(t);
+					});
+				}
+				return _removeFolderInfoCommand;
+			}
+		}
+
+		private RelayCommand _removeLogInfoCommand;
+		public RelayCommand RemoveLogInfoCommand
+		{
+			get
+			{
+				if(_removeLogInfoCommand == null)
+				{
+					_removeLogInfoCommand = new((o) =>
+					{
+						var t = _selectedLogInfoIndex;
+						SelectedLogInfoIndex = -1;
+						_ds.RemoveLogInfo(_selectedFolder, t);
+					});
+				}
+				return _removeLogInfoCommand;
+			}
+		}
+		#endregion //REMOVE
 
 		#endregion //COMMANDS
 
