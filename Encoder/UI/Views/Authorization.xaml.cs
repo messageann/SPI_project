@@ -87,7 +87,7 @@ namespace UI.Views
 			}
             foreach (var f in _dir.GetFiles(_searchPattern, SearchOption.TopDirectoryOnly))
             {
-                if (f.Name == name)
+                if (f.Name == (name + _ext))
                 {
                     MessageBox.Show(this, "Username already exists!");
                     return;

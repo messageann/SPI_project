@@ -62,18 +62,18 @@
 			<Label Content="Welcome!" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="Bold" FontSize="18" Foreground="#FFFFFF" Margin="0,87,0,0"/>
 
 			<exc:TextBoxEx x:Name="UsernameAuth" Width="342" Height="22" VerticalAlignment="Bottom"
-                    FontSize="12"  FontWeight="Regular" Foreground="#858585" Background="#545454"
+                    FontSize="12"  FontWeight="Regular" Foreground="White" Background="#545454"
 					BorderThickness="0" ex:Appearance.CornerRadius="10" Margin="0,0,0,98" 
                     HorizontalContentAlignment = "Center" VerticalContentAlignment = "Center" HintText="Username.."/>
 			<!--<ComboBox x:Name="UsernameCB" Width="342" Height="22" VerticalAlignment="Bottom" Margin="0,0,0,98" Background="#545454" IsEditable="False"/>-->
 			<exc:TextBoxEx x:Name="PasswordAuth" Width="342" Height="22" VerticalAlignment="Bottom"
-                     FontSize="12" FontWeight="Regular" Foreground="#858585" Background="#545454"
+                     FontSize="12" FontWeight="Regular" Foreground="White" Background="#545454"
 					 BorderThickness="0" ex:Appearance.CornerRadius="10" Margin="0,0,0,68" 
                      HorizontalContentAlignment = "Center" VerticalContentAlignment = "Center" HintText="Password"/>
 
 			<DockPanel Margin="100,0,100,23" VerticalAlignment="Bottom" LastChildFill="False">
 				<exc:ButtonEx x:Name="SignIn" BorderThickness="0" Background="{StaticResource SelectedFolderBrush}" CornerRadius="10" Width="84" Height="23"
-							  Click="SignIn_Click">
+							  Click="SignIn_Click" IsDefault="True">
 					<DockPanel LastChildFill="False" Width="84" Height="23" VerticalAlignment="Center" HorizontalAlignment="Center">
 						<TextBlock FontWeight="Medium" FontSize="13" VerticalAlignment="Center" Text="Sign in" Foreground="{StaticResource TextBrush}" HorizontalAlignment="Left" Margin="12,0,0,0"/>
 						<Grid Width="13" Margin="0,0,12,0" Height="13" VerticalAlignment="Center" HorizontalAlignment="Right" DockPanel.Dock="Right">

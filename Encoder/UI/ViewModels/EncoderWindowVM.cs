@@ -386,7 +386,7 @@ namespace UI.ViewModels
 					{
 						if (!_ds.TryReadFolderInfoContent(_selectedFolder, this._folderPass))
 						{
-							MessageBox.Show("Wrong folder pass!");
+							MessageBox.Show("Wrong folder key!");
 						}
 						else
 						{
@@ -421,7 +421,7 @@ namespace UI.ViewModels
 							}
 							else
 							{
-								MessageBox.Show("Bad password!");
+								MessageBox.Show("Bad key!");
 							}
 						}
 						else
