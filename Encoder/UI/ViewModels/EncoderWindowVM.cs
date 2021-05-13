@@ -4,7 +4,10 @@ using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
 using WPFCoreEx.Bases;
+using WPFCoreEx.Controls;
 
 namespace UI.ViewModels
 {
@@ -133,23 +136,23 @@ namespace UI.ViewModels
 				{
 					CancelEditModeLogInfoCommand.Execute(null);
 				}
-				LogInfoPass = string.Empty;
+				//LogInfoPass = string.Empty;
 				LogInfoDLogin = string.Empty;
 				LogInfoDPass = string.Empty;
 				NotifyPropertyChanged();
 			}
 		}
 
-		private string _loginfoPass;
-		public string LogInfoPass
-		{
-			get => _loginfoPass;
-			set
-			{
-				_loginfoPass = value;
-				NotifyPropertyChanged();
-			}
-		}
+		//private string _loginfoPass;
+		//public string LogInfoPass
+		//{
+		//	get => _loginfoPass;
+		//	set
+		//	{
+		//		_loginfoPass = value;
+		//		NotifyPropertyChanged();
+		//	}
+		//}
 
 		private string _loginfoDPass;
 		public string LogInfoDPass
@@ -333,8 +336,8 @@ namespace UI.ViewModels
 			}
 		}
 
-		private RelayCommand _saveEditableLogInfoCommand;
-		public RelayCommand SaveEditableLogInfoCommand
+		private RelayCommand<PasswordBox> _saveEditableLogInfoCommand;
+		public RelayCommand<PasswordBox> SaveEditableLogInfoCommand
 		{
 			get
 			{
@@ -342,7 +345,8 @@ namespace UI.ViewModels
 				{
 					_saveEditableLogInfoCommand = new((o) =>
 					{
-						if (string.IsNullOrEmpty(LogInfoPass))
+						var pass = o.Password;
+						if (string.IsNullOrEmpty(pass))
 						{
 							MessageBox.Show("Enter key!");
 						}
@@ -360,10 +364,11 @@ namespace UI.ViewModels
 						}
 						else
 						{
-							_ds.EndEditLogInfo(this._loginfoPass, this._loginfoDLogin, this._loginfoDPass);
+							_ds.EndEditLogInfo(pass, this._loginfoDLogin, this._loginfoDPass);
 							_selectedLogInfo.ClearCache();
 							EditModeLogInfo = EditMode.None;
-							LogInfoPass = string.Empty;
+							//LogInfoPass = string.Empty;
+							o.Clear();
 							LogInfoDLogin = string.Empty;
 							LogInfoDPass = string.Empty;
 						}
@@ -399,8 +404,8 @@ namespace UI.ViewModels
 			}
 		}
 
-		private RelayCommand _toggleLockLogInfoCommand;
-		public RelayCommand ToggleLockLogInfoCommand
+		private RelayCommand<PasswordBox> _toggleLockLogInfoCommand;
+		public RelayCommand<PasswordBox> ToggleLockLogInfoCommand
 		{
 			get
 			{
@@ -408,13 +413,15 @@ namespace UI.ViewModels
 				{
 					_toggleLockLogInfoCommand = new((o) =>
 					{
+						
 						if (_selectedLogInfo.IsInited)
 						{
 							if (_selectedLogInfo.HasKey)
 							{
 								SelectedLogInfoIndex = -1;
+								o.Clear();
 							}
-							else if (_ds.TryReadLogInfoContent(_selectedLogInfo, _loginfoPass, out var login, out var pass))
+							else if (_ds.TryReadLogInfoContent(_selectedLogInfo, o.Password, out var login, out var pass))
 							{
 								LogInfoDLogin = login;
 								LogInfoDPass = pass;
@@ -426,7 +433,8 @@ namespace UI.ViewModels
 						}
 						else
 						{
-							SaveEditableLogInfoCommand.Execute(null);
+							SaveEditableLogInfoCommand.Execute(o);
+							o.Clear();
 						}
 					});
 				}
@@ -484,11 +492,13 @@ namespace UI.ViewModels
 					{
 						if (f.EndsWith(".enc"))
 						{
-							_ds.DecryptFile(f);
+							string res = _ds.DecryptFile(f) ? "File decrypted." : "File was encrypted with another account.";
+							MessageBox.Show(res);
 						}
 						else
 						{
 							_ds.EncryptFile(f);
+							MessageBox.Show("File encrypted!");
 						}
 					});
 				}

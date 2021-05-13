@@ -24,7 +24,6 @@ namespace UI.Views
                 {
                     ((EncoderWindowVM)this.DataContext).EncryptFileCommand.Execute(f);
                 }
-                MessageBox.Show("File crypt done!");
             }
         }
 

@@ -37,6 +37,7 @@ namespace DataModule
 		private readonly SHA256 _sha256 = SHA256.Create();
 		private readonly Aes _aesBase = Aes.Create();
 		private readonly HMACSHA256 _hmac = new();
+		private HMACSHA256 _fileVer;
 
 		#region FILE
 		private ICryptoTransform _encryptFile;
@@ -81,6 +82,7 @@ namespace DataModule
 			{
 				_outputStream = new CryptoStream(_base, _encryptFile = _aesBase.CreateEncryptor(key, null), CryptoStreamMode.Write, true);
 				_inputStream = new CryptoStream(_base, _decryptFile = _aesBase.CreateDecryptor(key, null), CryptoStreamMode.Read, true);
+				_fileVer = new HMACSHA256(key);
 			}
 		}
 
@@ -99,6 +101,20 @@ namespace DataModule
 			key = _sha256.ComputeHash(pass);
 			ClearBytes(pass);
 			return _hmac.ComputeHash(key);
+		}
+		internal bool VerifyFileHMAC(FileStream fs)
+		{
+			var ch = _fileVer.ComputeHash(BitConverter.GetBytes(fs.Length - _fileVer.HashSize/8));
+			fs.Seek(fs.Length - _fileVer.HashSize/8, SeekOrigin.Begin);
+			byte[] h = new byte[_fileVer.HashSize/8];
+			fs.Read(h);
+			return BytesEqual(h, ch);
+		}
+		internal void SignFileHMAC(FileStream fs)
+		{
+			var ch = _fileVer.ComputeHash(BitConverter.GetBytes(fs.Length));
+			fs.Seek(fs.Length, SeekOrigin.Begin);
+			fs.Write(ch);
 		}
 		//internal byte[] CreateHMAC256(byte[] pass, out byte[] key,byte[] inp1, byte[] inp2)
 		//{
@@ -371,6 +387,7 @@ namespace DataModule
 					_hmac.Dispose();
 					_aesBase.Dispose();
 
+					_fileVer?.Dispose();
 					_encryptFile?.Dispose();
 					_decryptFile?.Dispose();
 					_encryptLayer?.Dispose();

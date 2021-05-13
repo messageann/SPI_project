@@ -9,6 +9,7 @@ using System.Windows;
 using Microsoft.Extensions.DependencyInjection;
 using DataModule;
 using UI.ViewModels;
+using System.Windows.Controls;
 
 namespace UI
 {
@@ -57,6 +58,13 @@ namespace UI
 		{
 			_isShutdowned = true;
 			ViewModelsController.Unload();
+		}
+
+		private void PasswordBox_PasswordChanged(object sender, RoutedEventArgs e)
+		{
+			var pb = (PasswordBox)sender;
+			var htb = (TextBlock)pb.Template.FindName("HINT_Host", pb);
+			htb.Visibility = pb.SecurePassword.Length == 0 ? Visibility.Visible : Visibility.Hidden;
 		}
 	}
 }

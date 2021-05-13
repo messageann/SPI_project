@@ -43,7 +43,7 @@ namespace UI.Views
 		private void SignIn_Click(object sender, RoutedEventArgs e)
 		{
             var name = UsernameAuth.Text;
-            var pass = PasswordAuth.Text;
+            var pass = PasswordAuth.Password;
             if (string.IsNullOrEmpty(name))
             {
                 MessageBox.Show("No username!");
@@ -74,7 +74,7 @@ namespace UI.Views
 		private void CreateAcc_Click(object sender, RoutedEventArgs e)
 		{
             var name = UsernameAuth.Text;
-            var pass = PasswordAuth.Text;
+            var pass = PasswordAuth.Password;
             if (string.IsNullOrEmpty(name))
             {
                 MessageBox.Show("No username!");

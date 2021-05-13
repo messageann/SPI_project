@@ -165,7 +165,7 @@
                                             <exc:TextBoxEx x:Name="FolderNameTextBox" FontSize="18" FontWeight="Medium" Foreground="{DynamicResource TextBrush}" Background="{x:Null}"
 													 BorderThickness="0" BorderBrush="{StaticResource SelectedFolderBrush}" ex:Appearance.CornerRadius="5"
 													 Text="{Binding Name}" Margin="20,0,5,0" VerticalAlignment="Center" DockPanel.Dock="Left"
-													 IsHitTestVisible="{Binding IsInited, Converter={exconvs:InverseBooleanConverter}}" HintText="Enter name.."
+													 IsReadOnly="{Binding IsInited}" HintText="Enter name.."
                                                     />
                                         </DockPanel>
                                         <Grid x:Name="BottomFolderGrid" Grid.Row="1">
@@ -458,14 +458,15 @@
                                         <exc:TextBoxEx x:Name="PassTextBoxEx" Grid.Column="3" Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.LogInfoDPass}"
 													   IsReadOnly="{Binding IsInited}" Visibility="Hidden"
                                                        HintText="Pass.."/>
-                                        <exc:TextBoxEx x:Name="KeyTextBoxEx" Grid.Column="4" Text="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.LogInfoPass}"
-													  Visibility="Hidden" HintText="Key.."/>
+                                        <PasswordBox Style="{StaticResource PassBoxStyle}" x:Name="KeyTextBoxEx" Grid.Column="4" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" VerticalContentAlignment="Center"
+													 BorderThickness="0" FontSize="16" FontWeight="Regular" Padding="3,0,0,0" Background="Transparent"
+													  Visibility="Hidden" Tag="Key.."/>
                                         <exc:TextBoxEx x:Name="DescrTextBoxEx" Grid.Column="5" Text="{Binding Description}" IsReadOnly="{Binding IsInited}"
 													   Margin="0,0,0,0"
-                                                       HintText="Description.."/>
+                                                       HintText="Description.." HintTextVisibility="Hidden"/>
                                         <exc:ButtonEx Grid.Column="6" ButtonBehavior="ImageWithOpacity"
 													  Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ToggleLockLogInfoCommand}"
-                                                      CommandParameter="{Binding }"
+                                                      CommandParameter="{Binding ElementName=KeyTextBoxEx}"
 													  IsEnabled="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}"
                                                       IsDefault="True">
                                             <Image x:Name="ItemLockImg" Source="{StaticResource unlock_black}" Margin="4"/>
@@ -491,21 +492,22 @@
                                             </MultiDataTrigger.Conditions>
                                             <Setter Property="IsHitTestVisible" TargetName="ItemGrid" Value="False"/>
                                         </MultiDataTrigger>
-                                        <DataTrigger Binding="{Binding HasKey}" Value="True">
+										<DataTrigger Binding="{Binding HasKey}" Value="True">
+											<DataTrigger.Setters>
+												<Setter Property="Visibility" TargetName="NameTextBoxEx" Value="Visible"/>
+												<Setter Property="Visibility" TargetName="LoginTextBoxEx" Value="Visible"/>
+												<Setter Property="Visibility" TargetName="PassTextBoxEx" Value="Visible"/>
+												<Setter Property="Visibility" TargetName="DescrTextBoxEx" Value="Visible"/>
+											</DataTrigger.Setters>
+										</DataTrigger>
+										<DataTrigger Binding="{Binding IsInited}" Value="False">
                                             <DataTrigger.Setters>
                                                 <Setter Property="Visibility" TargetName="NameTextBoxEx" Value="Visible"/>
                                                 <Setter Property="Visibility" TargetName="LoginTextBoxEx" Value="Visible"/>
                                                 <Setter Property="Visibility" TargetName="PassTextBoxEx" Value="Visible"/>
                                                 <Setter Property="Visibility" TargetName="DescrTextBoxEx" Value="Visible"/>
-                                            </DataTrigger.Setters>
-                                        </DataTrigger>
-                                        <DataTrigger Binding="{Binding IsInited}" Value="False">
-                                            <DataTrigger.Setters>
-                                                <Setter Property="Visibility" TargetName="NameTextBoxEx" Value="Visible"/>
-                                                <Setter Property="Visibility" TargetName="LoginTextBoxEx" Value="Visible"/>
-                                                <Setter Property="Visibility" TargetName="PassTextBoxEx" Value="Visible"/>
-                                                <Setter Property="Visibility" TargetName="DescrTextBoxEx" Value="Visible"/>
-                                            </DataTrigger.Setters>
+												<Setter Property="HintTextVisibility" TargetName="DescrTextBoxEx" Value="Visible"/>
+											</DataTrigger.Setters>
                                         </DataTrigger>
                                         <MultiDataTrigger>
                                             <MultiDataTrigger.Conditions>
@@ -519,7 +521,7 @@
                                                 <Condition Binding="{Binding IsInited}" Value="True"/>
                                                 <Condition Binding="{Binding HasKey}" Value="True"/>
                                             </MultiDataTrigger.Conditions>
-                                            <Setter Property="IsReadOnly" TargetName="KeyTextBoxEx" Value="True"/>
+                                            <Setter Property="IsEnabled" TargetName="KeyTextBoxEx" Value="False"/>
                                         </MultiDataTrigger>
                                     </DataTemplate.Triggers>
                                 </DataTemplate>

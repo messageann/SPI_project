@@ -13,6 +13,7 @@
 		Background="{DynamicResource DefaultBackgroundBrush}"
 		Height="280" Width="420"
 		FontFamily="{DynamicResource DefaultFontFamily}" ResizeMode="NoResize" WindowStartupLocation="CenterScreen"
+		FocusManager.FocusedElement="{Binding ElementName=UsernameAuth}"
 		>
 	<Window.Resources>
 		<ResourceDictionary Source="..\Styles\DefaultStyle.xaml"/>
@@ -61,15 +62,15 @@
 			</Grid>
 			<Label Content="Welcome!" HorizontalAlignment="Center" VerticalAlignment="Top" FontWeight="Bold" FontSize="18" Foreground="#FFFFFF" Margin="0,87,0,0"/>
 
-			<exc:TextBoxEx x:Name="UsernameAuth" Width="342" Height="22" VerticalAlignment="Bottom"
+			<exc:TextBoxEx x:Name="UsernameAuth" Width="342" Height="22" VerticalAlignment="Bottom" TabIndex="0"
                     FontSize="12"  FontWeight="Regular" Foreground="White" Background="#545454"
 					BorderThickness="0" ex:Appearance.CornerRadius="10" Margin="0,0,0,98" 
                     HorizontalContentAlignment = "Center" VerticalContentAlignment = "Center" HintText="Username.."/>
 			<!--<ComboBox x:Name="UsernameCB" Width="342" Height="22" VerticalAlignment="Bottom" Margin="0,0,0,98" Background="#545454" IsEditable="False"/>-->
-			<exc:TextBoxEx x:Name="PasswordAuth" Width="342" Height="22" VerticalAlignment="Bottom"
+			<PasswordBox Style="{StaticResource PassBoxStyle}" x:Name="PasswordAuth" Width="342" Height="22" VerticalAlignment="Bottom"
                      FontSize="12" FontWeight="Regular" Foreground="White" Background="#545454"
 					 BorderThickness="0" ex:Appearance.CornerRadius="10" Margin="0,0,0,68" 
-                     HorizontalContentAlignment = "Center" VerticalContentAlignment = "Center" HintText="Password"/>
+                     HorizontalContentAlignment = "Center" VerticalContentAlignment = "Center" Tag="Password.."/>
 
 			<DockPanel Margin="100,0,100,23" VerticalAlignment="Bottom" LastChildFill="False">
 				<exc:ButtonEx x:Name="SignIn" BorderThickness="0" Background="{StaticResource SelectedFolderBrush}" CornerRadius="10" Width="84" Height="23"
