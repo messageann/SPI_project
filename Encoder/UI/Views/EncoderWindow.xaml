@@ -466,9 +466,10 @@
                                                        HintText="Description.." HintTextVisibility="Hidden"/>
                                         <exc:ButtonEx Grid.Column="6" ButtonBehavior="ImageWithOpacity"
 													  Command="{Binding RelativeSource={RelativeSource AncestorType=Window}, Path=DataContext.ToggleLockLogInfoCommand}"
-                                                      CommandParameter="{Binding ElementName=KeyTextBoxEx}"
+                                                      CommandParameter="{Binding ElementName=ItemGrid}"
 													  IsEnabled="{Binding RelativeSource={RelativeSource AncestorType=ListViewItem}, Path=IsSelected}"
                                                       IsDefault="True">
+                                            
                                             <Image x:Name="ItemLockImg" Source="{StaticResource unlock_black}" Margin="4"/>
                                         </exc:ButtonEx>
                                     </Grid>
