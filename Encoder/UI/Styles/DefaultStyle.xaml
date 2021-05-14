@@ -1,0 +1,41 @@
+﻿<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+					xmlns:exc="clr-namespace:WPFCoreEx.Controls;assembly=WPFCoreEx">
+	<!--<SolidColorBrush x:Key="DefaultBackground" Color="#363636"/>
+	<SolidColorBrush x:Key="FolderBackground" Color="#242424"/>
+	<SolidColorBrush x:Key="ItemText" Color="#242424"/>
+	<SolidColorBrush x:Key="DefaultLightGrayBrush" Color="#545454"/>
+	<SolidColorBrush x:Key="HeaderElements" Color="#858585"/>
+	<Color x:Key="DefaultPurpleColor">#773079</Color>
+	<SolidColorBrush x:Key="DefaultPurpleBrush" Color="#773079"/>
+	<SolidColorBrush x:Key="DefaultWhiteBrush" Color="#FFFFFF"/>
+	<SolidColorBrush x:Key="ItemElements" Color="#C9C9C9"/>
+	<Color x:Key="SelectedFolderBackgroundColor">#DADADA</Color>
+	<SolidColorBrush  x:Key="SelectedFolderBackgroundBrush" Color="#DADADA"/>-->
+	<Color x:Key="DefaultBackgroundColor">#363636</Color>
+	<SolidColorBrush x:Key="DefaultBackgroundBrush" Color="#363636"/>
+	<Color x:Key="FolderBackgroundColor">#242424</Color>
+	<SolidColorBrush x:Key="FolderBackgroundBrush" Color="#242424"/>
+	<Color x:Key="HighlightTextColor">#242424</Color>
+	<Color x:Key="TextColor">#FFFFFF</Color>
+	<SolidColorBrush x:Key="TextBrush" Color="#FFFFFF"/>
+	<Color x:Key="FolderEllipseColor">#545454</Color>
+	<SolidColorBrush x:Key="FolderEllipseBrush" Color="#545454"/>
+	<SolidColorBrush x:Key="SelectedFolderBrush" Color="#773079"/>
+	<Color x:Key="SelectedFolderColor">#773079</Color>
+	<Color x:Key="SelectedFolderBackgroundColor">#DADADA</Color>
+	<SolidColorBrush x:Key="SelectedFolderBackgroundBrush" Color="#DADADA"/>
+	<FontFamily x:Key="DefaultFontFamily">Arial</FontFamily>
+
+	<Style TargetType="Menu">
+		<Style.Resources>
+			<Style TargetType="exc:MenuItemEx">
+				<Setter Property="BackgroundPopup" Value="{StaticResource DefaultBackgroundBrush}"/>
+				<Setter Property="Foreground" Value="#858585"/>
+				<Setter Property="FontFamily" Value="{StaticResource DefaultFontFamily}"/>
+				<Setter Property="FontSize" Value="14"/>
+			</Style>
+		</Style.Resources>
+		<Setter Property="Background" Value="{x:Null}"/>
+	</Style>
+</ResourceDictionary>
