@@ -15,7 +15,8 @@ namespace DataModule
 			}
 			return (ushort)(1 << power);
 		}
-		//public static int EqualOrLess(this int source, int max) => source > max ? max : source;
+		//public static int EqualOrLess(this int source, int max) => source > max ? max : source; 
+		//insane
 	}
 
 }
