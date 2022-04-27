@@ -1,0 +1,113 @@
+\hypertarget{class_encoder_1_1_aes}{}\doxysection{Encoder.\+Aes Class Reference}
+\label{class_encoder_1_1_aes}\index{Encoder.Aes@{Encoder.Aes}}
+
+
+AES-\/256 encryption class.  
+
+
+\doxysubsection*{Public Member Functions}
+\begin{DoxyCompactItemize}
+\item 
+\mbox{\hyperlink{class_encoder_1_1_aes_afa2089d2af805cb4c2eeb4a85a82146c}{Aes}} (Aes\+Mode mode)
+\begin{DoxyCompactList}\small\item\em Creates crypto object with passed mode. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_encoder_1_1_aes_a33a8f582ea4b4ee577ff910e2a524f6d}{Encrypt}} (Read\+Only\+Span$<$ byte $>$ input, Span$<$ byte $>$ output)
+\begin{DoxyCompactList}\small\item\em Encrypts plaintext from input and stores ciphertext in output. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_encoder_1_1_aes_ab5094f0765def942b3b903ce8a50c24f}{Decrypt}} (Read\+Only\+Span$<$ byte $>$ input, Span$<$ byte $>$ output)
+\begin{DoxyCompactList}\small\item\em Decrypts ciphertext from input and stores plaintext in output. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_encoder_1_1_aes_a0ff859a1f92ab6470882dc3f39e3aea5}{Set\+IV}} (Read\+Only\+Span$<$ byte $>$ iv)
+\begin{DoxyCompactList}\small\item\em Sets IV(initialization vector) used in both encryption and decryption. \end{DoxyCompactList}\item 
+void \mbox{\hyperlink{class_encoder_1_1_aes_addefc2246e2d62e3ef15c0368a02fe4b}{Set\+Key}} (Read\+Only\+Span$<$ byte $>$ key)
+\begin{DoxyCompactList}\small\item\em Sets key used in both encryption and decryption. \end{DoxyCompactList}\end{DoxyCompactItemize}
+
+
+\doxysubsection{Detailed Description}
+AES-\/256 encryption class. 
+
+\doxysubsection{Constructor \& Destructor Documentation}
+\mbox{\Hypertarget{class_encoder_1_1_aes_afa2089d2af805cb4c2eeb4a85a82146c}\label{class_encoder_1_1_aes_afa2089d2af805cb4c2eeb4a85a82146c}} 
+\index{Encoder.Aes@{Encoder.Aes}!Aes@{Aes}}
+\index{Aes@{Aes}!Encoder.Aes@{Encoder.Aes}}
+\doxysubsubsection{\texorpdfstring{Aes()}{Aes()}}
+{\footnotesize\ttfamily Encoder.\+Aes.\+Aes (\begin{DoxyParamCaption}\item[{Aes\+Mode}]{mode }\end{DoxyParamCaption})}
+
+
+
+Creates crypto object with passed mode. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em mode} & \\
+\hline
+\end{DoxyParams}
+
+
+\doxysubsection{Member Function Documentation}
+\mbox{\Hypertarget{class_encoder_1_1_aes_ab5094f0765def942b3b903ce8a50c24f}\label{class_encoder_1_1_aes_ab5094f0765def942b3b903ce8a50c24f}} 
+\index{Encoder.Aes@{Encoder.Aes}!Decrypt@{Decrypt}}
+\index{Decrypt@{Decrypt}!Encoder.Aes@{Encoder.Aes}}
+\doxysubsubsection{\texorpdfstring{Decrypt()}{Decrypt()}}
+{\footnotesize\ttfamily void Encoder.\+Aes.\+Decrypt (\begin{DoxyParamCaption}\item[{Read\+Only\+Span$<$ byte $>$}]{input,  }\item[{Span$<$ byte $>$}]{output }\end{DoxyParamCaption})}
+
+
+
+Decrypts ciphertext from input and stores plaintext in output. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & \\
+\hline
+{\em output} & \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{class_encoder_1_1_aes_a33a8f582ea4b4ee577ff910e2a524f6d}\label{class_encoder_1_1_aes_a33a8f582ea4b4ee577ff910e2a524f6d}} 
+\index{Encoder.Aes@{Encoder.Aes}!Encrypt@{Encrypt}}
+\index{Encrypt@{Encrypt}!Encoder.Aes@{Encoder.Aes}}
+\doxysubsubsection{\texorpdfstring{Encrypt()}{Encrypt()}}
+{\footnotesize\ttfamily void Encoder.\+Aes.\+Encrypt (\begin{DoxyParamCaption}\item[{Read\+Only\+Span$<$ byte $>$}]{input,  }\item[{Span$<$ byte $>$}]{output }\end{DoxyParamCaption})}
+
+
+
+Encrypts plaintext from input and stores ciphertext in output. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em input} & \\
+\hline
+{\em output} & \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{class_encoder_1_1_aes_a0ff859a1f92ab6470882dc3f39e3aea5}\label{class_encoder_1_1_aes_a0ff859a1f92ab6470882dc3f39e3aea5}} 
+\index{Encoder.Aes@{Encoder.Aes}!SetIV@{SetIV}}
+\index{SetIV@{SetIV}!Encoder.Aes@{Encoder.Aes}}
+\doxysubsubsection{\texorpdfstring{SetIV()}{SetIV()}}
+{\footnotesize\ttfamily void Encoder.\+Aes.\+Set\+IV (\begin{DoxyParamCaption}\item[{Read\+Only\+Span$<$ byte $>$}]{iv }\end{DoxyParamCaption})}
+
+
+
+Sets IV(initialization vector) used in both encryption and decryption. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em iv} & \\
+\hline
+\end{DoxyParams}
+\mbox{\Hypertarget{class_encoder_1_1_aes_addefc2246e2d62e3ef15c0368a02fe4b}\label{class_encoder_1_1_aes_addefc2246e2d62e3ef15c0368a02fe4b}} 
+\index{Encoder.Aes@{Encoder.Aes}!SetKey@{SetKey}}
+\index{SetKey@{SetKey}!Encoder.Aes@{Encoder.Aes}}
+\doxysubsubsection{\texorpdfstring{SetKey()}{SetKey()}}
+{\footnotesize\ttfamily void Encoder.\+Aes.\+Set\+Key (\begin{DoxyParamCaption}\item[{Read\+Only\+Span$<$ byte $>$}]{key }\end{DoxyParamCaption})}
+
+
+
+Sets key used in both encryption and decryption. 
+
+
+\begin{DoxyParams}{Parameters}
+{\em key} & \\
+\hline
+\end{DoxyParams}
+
+
+The documentation for this class was generated from the following file\+:\begin{DoxyCompactItemize}
+\item 
+E\+:/chiksa/\+Encoder/\+Encoder/Aes.\+cs\end{DoxyCompactItemize}
